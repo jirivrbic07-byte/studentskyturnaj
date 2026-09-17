@@ -6,7 +6,7 @@
     "node": "22.x"
   },
   "scripts": {
-    "build": "next build --webpack",
+    "build": "node scripts/patch-jose-workerd.mjs && next build --webpack",
     "dev": "next dev",
     "dev:webpack": "next dev --webpack",
     "dev:warm": "node scripts/warm-dev.mjs",
@@ -16,9 +16,14 @@
     "seed:lfg": "node scripts/seed-free-agents.mjs",
     "seed:tournament": "node scripts/seed-test-tournament.mjs",
     "dokumenty:pdf": "node scripts/docx-to-pdf.mjs",
-    "test:discord-webhook": "node scripts/test-discord-webhook.mjs"
+    "test:discord-webhook": "node scripts/test-discord-webhook.mjs",
+    "postinstall": "node scripts/patch-jose-workerd.mjs",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.6",
     "@opentelemetry/api": "^1.9.1",
     "firebase": "^12.12.0",
     "firebase-admin": "^13.8.0",
@@ -41,6 +46,7 @@
     "mammoth": "^1.12.0",
     "playwright": "^1.59.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.133.0"
   }
 }

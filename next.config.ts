@@ -6,7 +6,7 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
-  serverExternalPackages: ["firebase-admin"],
+  serverExternalPackages: ["firebase-admin", "jwks-rsa", "jose"],
   experimental: {
     optimizePackageImports: [
       "framer-motion",
