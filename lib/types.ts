@@ -13,6 +13,8 @@ export interface RosterPlayer {
   studentCertUrl?: string;
   parentConsentUrl?: string;
   faceitElo?: number | null;
+  /** Firebase uid hráče, který se k slotu propojil a kapitán ho schválil. */
+  linkedUserId?: string | null;
 }
 
 export interface CoachRoster {
@@ -40,8 +42,11 @@ export interface TeamDocument {
   createdAt: Timestamp;
   updatedAt: Timestamp;
   rejectionReason?: string;
-  /** Cesty v Storage + čas nahrání (GDPR cron 48 h) */
+  /** Kdy admin tým schválil — odtud běží 24 h do smazání dokladů ze Storage. */
+  approvedAt?: string;
+  /** Cesty v Storage (GDPR cron maže 24 h po schválení). */
   storageMeta: { path: string; uploadedAt: number }[];
+  documentsPurgedAt?: string;
 }
 
 export interface CaptainProfile {
@@ -68,6 +73,14 @@ export interface CaptainProfile {
   pendingDeletionExpiresAt?: Timestamp | null;
   /** SHA-256 celého recovery tokenu (nikdy neukládá plaintext). */
   deletionRecoveryTokenHash?: string | null;
+  /** Kapitán / hráč / admin. Chybějící = kapitán. Admin se nastavuje jen ze serveru. */
+  accountRole?: "captain" | "player" | "admin";
+  /** Původní role před povýšením na admina — po odebrání práv se vrátí. */
+  previousAccountRole?: "captain" | "player" | null;
+  linkedTeamId?: string | null;
+  linkedSlotKind?: "teammate" | "substitute" | null;
+  linkedSlotIndex?: number | null;
+  joinStatus?: "none" | "pending" | "approved" | "rejected";
 }
 
 export interface FreeAgentDocument {

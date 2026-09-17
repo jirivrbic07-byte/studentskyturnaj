@@ -236,6 +236,18 @@ export function resolveSeasonBracketForDisplay(input: {
     const qf = discipline?.playoffs.find((p) => p.id === "qf")?.startsAt ?? null;
     const lan = discipline?.playoffs.find((p) => p.id === "lan")?.startsAt ?? null;
     bracket = createEmptyBracket(gameId, { r16, qf, lan });
+  } else if (discipline) {
+    const r16 = discipline.playoffs.find((p) => p.id === "r16")?.startsAt ?? null;
+    const qf = discipline.playoffs.find((p) => p.id === "qf")?.startsAt ?? null;
+    const lan = discipline.playoffs.find((p) => p.id === "lan")?.startsAt ?? null;
+    bracket = {
+      ...bracket,
+      matches: bracket.matches.map((m) => ({
+        ...m,
+        scheduledAt:
+          m.round === "r16" ? r16 : m.round === "qf" ? qf : lan ?? null,
+      })),
+    };
   }
 
   return applyQualificationSeeding(bracket, advancements);

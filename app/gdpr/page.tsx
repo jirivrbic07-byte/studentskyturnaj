@@ -6,7 +6,7 @@ import { pageMetadata } from "@/lib/site-seo";
 export const metadata: Metadata = pageMetadata({
   title: "Ochrana údajů (GDPR)",
   description:
-    "Zpracování citlivých dokumentů při ověření studentského statusu a automatické mazání po 48 hodinách.",
+    "Zpracování citlivých dokumentů při ověření studentského statusu a automatické mazání 24 hodin po schválení týmu.",
   path: "/gdpr",
 });
 
@@ -36,10 +36,10 @@ export default function GdprPage() {
         <p>
           Tyto citlivé soubory jsou uloženy zabezpečeně ve Firebase Storage a{" "}
           <strong className="text-white">
-            jsou automaticky smazány nejpozději po 48 hodinách
-          </strong>{" "}
-          od nahrání — technicky je maže naplánovaný úklid na serveru (cron), aby
-          nezůstávaly déle, než je nutné pro kontrolu administrace.
+            automaticky se smažou 24 hodin po schválení týmu administrátorem
+          </strong>
+          . Dokud tým čeká na schválení, soubory necháváme kvůli kontrole. Úklid
+          spouští naplánovaná úloha na serveru (cron).
         </p>
         <p>
           Údaje nepoužíváme k marketingu ani je nepředáváme třetím stranám mimo

@@ -15,6 +15,7 @@ import {
   formatFaceitUnlockHint,
   isFaceitHubUnlocked,
 } from "@/lib/tournament-faceit";
+import { parseAccountRole } from "@/lib/account-role";
 
 type TeamOption = { id: string; teamName: string; schoolName: string };
 
@@ -45,6 +46,7 @@ export function TournamentJoinPanel({
   onJoined,
 }: Props) {
   const { user, profile } = useAuth();
+  const isPlayer = parseAccountRole(profile?.accountRole) === "player";
   const [teams, setTeams] = useState<TeamOption[]>([]);
   const [registeredTeams, setRegisteredTeams] = useState<TeamOption[]>([]);
   const [invitations, setInvitations] = useState<InvitationRow[]>([]);
@@ -64,7 +66,7 @@ export function TournamentJoinPanel({
   const isPlayoff = phase === "playoff";
 
   const loadTeams = useCallback(async () => {
-    if (!user || !isFirebaseConfigured()) {
+    if (!user || !isFirebaseConfigured() || isPlayer) {
       setTeams([]);
       setInvitations([]);
       setLoading(false);
@@ -130,7 +132,7 @@ export function TournamentJoinPanel({
     } finally {
       setLoading(false);
     }
-  }, [user, gameId, regSet, isPlayoff, tournamentId]);
+  }, [user, gameId, regSet, isPlayoff, tournamentId, isPlayer]);
 
   useEffect(() => {
     void loadTeams();
@@ -199,6 +201,41 @@ export function TournamentJoinPanel({
             ? "Máš otevřenou pozvánku, ale tým ještě není schválený nebo neodpovídá hře turnaje."
             : "Do tohoto turnaje se přihlašují jen týmy vybrané administrátorem. Pokud tě pozvou, přijde e-mail a tým se zobrazí zde."}
         </p>
+      </GlassCard>
+    );
+  }
+
+  if (isPlayer) {
+    return (
+      <GlassCard>
+        <h3 className="font-[family-name:var(--font-bebas)] text-xl text-white">
+          Kvalifikace pro tebe
+        </h3>
+        <p className="mt-2 text-sm text-slate-400">
+          Přihlášení týmu řeší kapitán. Ty odkaz uvidíš tady, jakmile tě kapitán
+          schválil a tým je v turnaji.
+        </p>
+        {effectiveFaceitUrl ? (
+          faceitUnlocked ? (
+            <a
+              href={effectiveFaceitUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-block text-[#39FF14] underline"
+            >
+              Otevřít Faceit turnaj →
+            </a>
+          ) : (
+            <p className="mt-3 text-sm text-amber-200">
+              {formatFaceitUnlockHint(startsAtMs)}
+            </p>
+          )
+        ) : (
+          <p className="mt-3 text-sm text-slate-500">
+            Odkaz se ukáže, až bude tým přihlášený a Faceit odemčený. Nic posílat
+            nemusí kapitán — máš to tady.
+          </p>
+        )}
       </GlassCard>
     );
   }

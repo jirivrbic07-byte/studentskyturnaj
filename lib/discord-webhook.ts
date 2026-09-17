@@ -118,14 +118,19 @@ export async function reportSiteAction(input: {
 export async function notifyDiscordCaptainRegistered(input: {
   email: string;
   uid: string;
+  accountRole?: "captain" | "player";
 }): Promise<void> {
+  const player = input.accountRole === "player";
   await reportSiteAction({
-    content: "**Registrace kapitána** · nový účet (e-mail/heslo)",
-    title: "Nový kapitán",
+    content: player
+      ? "**Registrace hráče** · nový účet (e-mail/heslo)"
+      : "**Registrace kapitána** · nový účet (e-mail/heslo)",
+    title: player ? "Nový hráč" : "Nový kapitán",
     description: "Účet byl založen v Auth.",
     fields: [
       { name: "E-mail", value: input.email.slice(0, 250), inline: true },
       { name: "UID", value: `\`${input.uid}\``, inline: true },
+      { name: "Role", value: player ? "Hráč" : "Kapitán", inline: true },
     ],
   });
 }

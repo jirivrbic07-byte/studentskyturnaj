@@ -7,7 +7,6 @@ import { useAuth } from "@/contexts/auth-context";
 import { PortalSidebarNav } from "@/components/portal-sidebar-nav";
 import { SiteSocialLinks } from "@/components/site-social-links";
 import { GlowButton } from "@/components/glow-button";
-import { isClientAdminEmail } from "@/lib/admin-client";
 import { sidebarNavForPath } from "@/lib/portal-hub";
 import { TOURNAMENT_BRAND_LOGO } from "@/lib/tournament-game-logos";
 
@@ -19,11 +18,15 @@ export function SiteSidebar({
   onClose: () => void;
 }) {
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
-  const { items, brandHref, brandTitle, brandSubtitle } = sidebarNavForPath(pathname);
+  const { user, signOut, access } = useAuth();
+  const accountRole = access.portalKind;
+  const { items, brandHref, brandTitle, brandSubtitle } = sidebarNavForPath(pathname, {
+    accountRole,
+    access,
+  });
   const isPortal =
     pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
-  const showAdmin = Boolean(user && isClientAdminEmail(user.email));
+  const showAdmin = Boolean(user && (access.isAdmin || access.portalKind === "admin"));
   const portalHref = showAdmin ? "/admin" : "/dashboard";
 
   return (
@@ -86,16 +89,16 @@ export function SiteSidebar({
                 onClick={onClose}
                 className="rounded-md px-2 py-1.5 text-center text-xs font-medium text-[#39FF14] transition-colors hover:bg-[#39FF14]/10"
               >
-                {showAdmin ? "Admin přehled" : "Kapitánský přehled"}
+                {showAdmin ? "Admin přehled" : accountRole === "player" ? "Hráčský přehled" : "Kapitánský přehled"}
               </Link>
             ) : null}
-            {!isPortal ? (
+            {!isPortal && !showAdmin ? (
               <Link
                 href="/dashboard/profil"
                 onClick={onClose}
                 className="rounded-md px-2 py-1.5 text-center text-xs text-slate-400 transition-colors hover:bg-white/5 hover:text-white"
               >
-                Profil kapitána
+                {accountRole === "player" ? "Nastavení účtu" : "Profil kapitána"}
               </Link>
             ) : null}
             {isPortal ? (
@@ -133,7 +136,7 @@ export function SiteSidebar({
               className="w-full !justify-center !px-3 !text-xs"
               onClick={onClose}
             >
-              Registrace kapitána
+              Registrace
             </GlowButton>
           </>
         )}

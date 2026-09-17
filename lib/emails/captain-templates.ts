@@ -44,11 +44,11 @@ export function teamSubmittedEmailHtml(
   );
 }
 
-export function adminNewUserEmailHtml(email: string, uid: string) {
+export function adminNewUserEmailHtml(email: string, uid: string, roleLabel = "kapitán") {
   return emailShell(
-    "Nový kapitánský účet",
-    `<p style="${ea.p}">Byl zaregistrován nový účet kapitána.</p>
-<ul style="${ea.list}"><li>E-mail: ${email}</li><li>UID: ${uid}</li></ul>`,
+    `Nový účet · ${escapeHtml(roleLabel)}`,
+    `<p style="${ea.p}">Byl zaregistrován nový účet (${escapeHtml(roleLabel)}).</p>
+<ul style="${ea.list}"><li>E-mail: ${escapeHtml(email)}</li><li>UID: ${escapeHtml(uid)}</li></ul>`,
     { headerSub: emailSub }
   );
 }

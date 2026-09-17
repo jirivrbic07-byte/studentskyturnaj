@@ -64,7 +64,7 @@ export const ABOUT_ORGANIZER = {
 export const ABOUT_SEASON = {
   title: `Sezóna ${SEASON_NUMBER}`,
   body:
-    "Aktuálně běží Sezóna 4 s aktivní registrací do Counter-Strike 2 a League of Legends. Prize pool zatím neznáme — dozvíš se ho mezi začátkem a koncem registrace. Brawl Stars a EA SPORTS FC 26 jsou v přípravě — sleduj Oznámení na webu.",
+    "Aktuálně běží Sezóna 4 s otevřenou registrací do Counter-Strike 2 a League of Legends. Turnaj startuje 1. 1. 2027, termíny kvalifikací a zápasů budou upřesněny. Prize pool zatím neznáme — dozvíš se ho mezi začátkem a koncem registrace. Brawl Stars a EA SPORTS FC 26 jsou v přípravě — sleduj Oznámení na webu.",
 } as const;
 
 export const ABOUT_JOIN = {

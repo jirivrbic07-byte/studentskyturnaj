@@ -6,6 +6,7 @@ import {
   getSeasonBracketRest,
   getSeasonRest,
   listQualificationAdvancementsRest,
+  deleteQualificationAdvancementRest,
   upsertQualificationAdvancementRest,
   upsertSeasonBracketRest,
 } from "@/lib/seasons-firestore";
@@ -24,12 +25,24 @@ export async function GET(request: Request, ctx: Ctx) {
 
   const { id: seasonId } = await ctx.params;
   const url = new URL(request.url);
-  const gameId = parseGameId(url.searchParams.get("gameId"));
+  const gameIdParam = parseGameId(url.searchParams.get("gameId"));
   const tournamentId = url.searchParams.get("tournamentId")?.trim();
-  if (!gameId && !tournamentId) {
+  if (!gameIdParam && !tournamentId) {
     return NextResponse.json({ ok: false, error: "Chybí gameId." }, { status: 400 });
   }
 
+  let tournamentGameId = gameIdParam;
+  let qualRound = 0;
+  if (tournamentId) {
+    const tournament = await getDocRest(`tournaments/${tournamentId}`);
+    if (!tournament) {
+      return NextResponse.json({ ok: false, error: "Turnaj neexistuje." }, { status: 404 });
+    }
+    tournamentGameId = parseGameId(String(tournament.gameId ?? "")) ?? gameIdParam;
+    qualRound = Number(tournament.qualificationRound ?? 0);
+  }
+
+  const gameId = tournamentGameId;
   const [season, bracket, advancements] = await Promise.all([
     getSeasonRest(seasonId),
     gameId ? getSeasonBracketRest(seasonId, gameId) : Promise.resolve(null),
@@ -55,12 +68,44 @@ export async function GET(request: Request, ctx: Ctx) {
     }));
   }
 
+  const approved = gameId
+    ? (await listCollectionDocsRest("teams", 400))
+        .filter((row) => row.status === "approved" && String(row.gameId ?? "cs2") === gameId)
+        .map((row) => ({
+          teamId: String(row.id),
+          teamName: String(row.teamName ?? ""),
+          schoolName: String(row.schoolName ?? ""),
+        }))
+    : [];
+
+  const teamsById = new Map<string, { teamId: string; teamName: string; schoolName: string }>();
+  for (const t of [...approved, ...registrations]) {
+    if (t.teamId) teamsById.set(t.teamId, t);
+  }
+  const teams = [...teamsById.values()].sort((a, b) =>
+    a.teamName.localeCompare(b.teamName, "cs")
+  );
+
+  const placements = tournamentId
+    ? advancements
+        .filter((a) => a.tournamentId === tournamentId)
+        .map((a) => ({
+          placement: a.placement,
+          teamId: a.teamId,
+          teamName: a.teamName,
+          schoolName: a.schoolName,
+        }))
+    : [];
+
   return NextResponse.json({
     ok: true,
     season,
     bracket,
     advancements,
     registrations,
+    teams,
+    placements,
+    qualificationRound: qualRound || undefined,
   });
 }
 
@@ -85,9 +130,9 @@ export async function POST(request: Request, ctx: Ctx) {
 
   const tournamentId = body.tournamentId?.trim();
   const advances = body.advances ?? [];
-  if (!tournamentId || advances.length === 0) {
+  if (!tournamentId) {
     return NextResponse.json(
-      { ok: false, error: "Vyplň tournamentId a seznam postupujících (placement 1–4)." },
+      { ok: false, error: "Vyplň tournamentId." },
       { status: 400 }
     );
   }
@@ -107,9 +152,19 @@ export async function POST(request: Request, ctx: Ctx) {
   }
 
   const saved = [];
+  const byPlacement = new Map<number, { teamId: string; placement: number }>();
   for (const row of advances) {
     const placement = Number(row.placement);
     if (placement < 1 || placement > 4) continue;
+    byPlacement.set(placement, { teamId: String(row.teamId ?? "").trim(), placement });
+  }
+
+  for (const placement of [1, 2, 3, 4]) {
+    const row = byPlacement.get(placement);
+    if (!row?.teamId) {
+      await deleteQualificationAdvancementRest(seasonId, tournamentId, placement);
+      continue;
+    }
     const team = (await getDocRest(`teams/${row.teamId}`)) as TeamDocument | null;
     if (!team) continue;
     const entry = {
@@ -125,7 +180,8 @@ export async function POST(request: Request, ctx: Ctx) {
     saved.push(entry);
   }
 
-  if (body.autoBracket) {
+  const shouldFillBracket = body.autoBracket !== false;
+  if (shouldFillBracket) {
     const bracket = await getSeasonBracketRest(seasonId, gameId);
     if (bracket) {
       const all = await listQualificationAdvancementsRest(seasonId, gameId);
@@ -141,7 +197,7 @@ export async function POST(request: Request, ctx: Ctx) {
       `**Turnaj:** \`${tournamentId}\``,
       `**Kolo:** ${qualRound}`,
       `**Uloženo postupů:** ${saved.length}`,
-      body.autoBracket ? "**Auto bracket:** ano" : null,
+      body.autoBracket === false ? null : "**Auto bracket:** ano",
     ]
       .filter(Boolean)
       .join("\n"),

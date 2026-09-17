@@ -46,7 +46,7 @@ export async function uploadTeamFile(
 }
 
 /**
- * Cover obrázek oznámení: komprese → `announcements/` (mimo GDPR 48h mazání users/teams).
+ * Cover obrázek oznámení: komprese → `announcements/` (mimo GDPR mazání users/teams).
  */
 export async function uploadAnnouncementImage(
   file: File

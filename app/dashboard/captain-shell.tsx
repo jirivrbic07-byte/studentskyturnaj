@@ -10,7 +10,7 @@ import {
 } from "@/lib/pending-deletion";
 
 export function CaptainShell({ children }: { children: ReactNode }) {
-  const { user, loading, firebaseReady, profile, refreshProfile } = useAuth();
+  const { user, loading, firebaseReady, profile, refreshProfile, access } = useAuth();
   const router = useRouter();
   const [cancelDeletionBusy, setCancelDeletionBusy] = useState(false);
   const [cancelDeletionError, setCancelDeletionError] = useState<string | null>(null);
@@ -19,8 +19,12 @@ export function CaptainShell({ children }: { children: ReactNode }) {
     if (!firebaseReady || loading) return;
     if (!user) {
       router.replace("/prihlaseni");
+      return;
     }
-  }, [user, loading, firebaseReady, router]);
+    if (!access.loading && (access.isAdmin || access.portalKind === "admin")) {
+      window.location.replace("/admin");
+    }
+  }, [user, loading, firebaseReady, router, access.loading, access.isAdmin, access.portalKind]);
 
   if (!firebaseReady) {
     return (
@@ -30,10 +34,18 @@ export function CaptainShell({ children }: { children: ReactNode }) {
     );
   }
 
-  if (loading || !user) {
+  if (loading || !user || access.loading) {
     return (
       <div className="flex flex-1 items-center justify-center p-8 text-slate-500">
         Načítání…
+      </div>
+    );
+  }
+
+  if (access.isAdmin || access.portalKind === "admin") {
+    return (
+      <div className="flex flex-1 items-center justify-center p-8 text-slate-500">
+        Přesměrování do administrace…
       </div>
     );
   }

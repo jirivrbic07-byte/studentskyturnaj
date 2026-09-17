@@ -16,14 +16,16 @@ export type SeasonRegistrationWindow = {
 export type SeasonQualificationSlot = {
   round: number;
   label: string;
-  startsAt: string;
+  /** ISO datum, nebo `null` když termín ještě není známý. */
+  startsAt: string | null;
   tournamentId?: string | null;
 };
 
 export type SeasonPlayoffSlot = {
   id: string;
   label: string;
-  startsAt: string;
+  /** ISO datum, nebo `null` když termín ještě není známý. */
+  startsAt: string | null;
   note?: string;
 };
 
@@ -94,53 +96,48 @@ function prague(isoLocal: string): string {
   return isoLocal;
 }
 
+export const SEASON_DATE_TBA_LABEL = "Bude upřesněno";
+export const REGISTRATION_OPENS_LABEL = "1. 9. 2026";
+export const TOURNAMENT_STARTS_AT_LABEL = "1. 1. 2027";
+/** Oficiální start Sezóny 4 (kvalifikace a zápasy až poté, termíny TBA). */
+export const S4_TOURNAMENT_STARTS_AT = prague("2027-01-01T00:00:00+01:00");
+
+const S4_REGISTRATION = {
+  opensAt: prague("2026-09-01T00:00:00+02:00"),
+  closesAt: prague("2026-12-31T23:59:59+01:00"),
+} as const;
+
+const S4_QUALIFICATIONS_TBA: SeasonQualificationSlot[] = [
+  { round: 1, label: "Kvalifikace 1", startsAt: null },
+  { round: 2, label: "Kvalifikace 2", startsAt: null },
+  { round: 3, label: "Kvalifikace 3", startsAt: null },
+  { round: 4, label: "Kvalifikace 4", startsAt: null },
+];
+
+const S4_PLAYOFFS_TBA: SeasonPlayoffSlot[] = [
+  { id: "r16", label: "Osmifinále", startsAt: null, note: "Termín bude upřesněn" },
+  { id: "qf", label: "Čtvrtfinále", startsAt: null, note: "Termín bude upřesněn" },
+  {
+    id: "lan",
+    label: "Semifinále, finále, zápas o 3. místo",
+    startsAt: null,
+    note: "Termín bude upřesněn",
+  },
+];
+
 /** Výchozí harmonogram Sezóny 4 (CET). */
 export const S4_DEFAULT_SCHEDULE: SeasonDisciplineSchedule[] = [
   {
     gameId: "cs2",
-    registration: {
-      opensAt: prague("2026-09-01T17:00:00+02:00"),
-      closesAt: prague("2026-11-04T23:59:59+01:00"),
-    },
-    qualifications: [
-      { round: 1, label: "Kvalifikace 1", startsAt: prague("2026-11-06T18:00:00+01:00") },
-      { round: 2, label: "Kvalifikace 2", startsAt: prague("2026-11-14T18:00:00+01:00") },
-      { round: 3, label: "Kvalifikace 3", startsAt: prague("2026-11-20T18:00:00+01:00") },
-      { round: 4, label: "Kvalifikace 4", startsAt: prague("2026-11-28T18:00:00+01:00") },
-    ],
-    playoffs: [
-      { id: "r16", label: "Osmifinále", startsAt: prague("2026-12-04T18:00:00+01:00") },
-      { id: "qf", label: "Čtvrtfinále", startsAt: prague("2026-12-12T18:00:00+01:00") },
-      {
-        id: "lan",
-        label: "Semifinále, finále, zápas o 3. místo",
-        startsAt: prague("2026-12-16T10:00:00+01:00"),
-        note: "Sraz a přípravy účastníků v 9:00",
-      },
-    ],
+    registration: { ...S4_REGISTRATION },
+    qualifications: S4_QUALIFICATIONS_TBA.map((q) => ({ ...q })),
+    playoffs: S4_PLAYOFFS_TBA.map((p) => ({ ...p })),
   },
   {
     gameId: "lol",
-    registration: {
-      opensAt: prague("2026-09-01T00:00:00+02:00"),
-      closesAt: prague("2026-11-04T23:59:59+01:00"),
-    },
-    qualifications: [
-      { round: 1, label: "Kvalifikace 1", startsAt: prague("2026-11-07T18:00:00+01:00") },
-      { round: 2, label: "Kvalifikace 2", startsAt: prague("2026-11-13T18:00:00+01:00") },
-      { round: 3, label: "Kvalifikace 3", startsAt: prague("2026-11-21T18:00:00+01:00") },
-      { round: 4, label: "Kvalifikace 4", startsAt: prague("2026-11-27T18:00:00+01:00") },
-    ],
-    playoffs: [
-      { id: "r16", label: "Osmifinále", startsAt: prague("2026-12-05T18:00:00+01:00") },
-      { id: "qf", label: "Čtvrtfinále", startsAt: prague("2026-12-11T18:00:00+01:00") },
-      {
-        id: "lan",
-        label: "Semifinále, finále, zápas o 3. místo",
-        startsAt: prague("2026-12-17T10:00:00+01:00"),
-        note: "Sraz a přípravy účastníků v 9:00",
-      },
-    ],
+    registration: { ...S4_REGISTRATION },
+    qualifications: S4_QUALIFICATIONS_TBA.map((q) => ({ ...q })),
+    playoffs: S4_PLAYOFFS_TBA.map((p) => ({ ...p })),
   },
 ];
 
@@ -152,7 +149,7 @@ export const S4_DEFAULT_SEASON: Omit<SeasonDocument, "createdAt" | "updatedAt"> 
   published: true,
   prizePoolText: PRIZE_POOL_TBD_MESSAGE,
   intro:
-    "Školní turnaj ESPORTARENA TSV pro české a slovenské školy. Nejdřív se kapitán přihlásí týmem do sezóny, poté do jednotlivých kvalifikací. Z každé kvalifikace postupují 4 nejlepší týmy do pavouka.",
+    "Školní turnaj ESPORTARENA TSV pro české a slovenské školy. Registrace týmů je otevřená už teď, samotný start sezóny je 1. 1. 2027. Termíny kvalifikací a zápasů budou upřesněny. Nejdřív se kapitán přihlásí týmem do sezóny, poté do jednotlivých kvalifikací. Z každé kvalifikace postupují 4 nejlepší týmy do pavouka.",
   disciplines: S4_DEFAULT_SCHEDULE,
 };
 
@@ -171,8 +168,14 @@ export function isSeasonRegistrationOpen(
   return t >= Date.parse(window.opensAt) && t <= Date.parse(window.closesAt);
 }
 
-export function formatSeasonDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("cs-CZ", {
+export function isSeasonDateTbd(iso: string | null | undefined): boolean {
+  if (!iso || !iso.trim()) return true;
+  return !Number.isFinite(Date.parse(iso));
+}
+
+export function formatSeasonDateTime(iso: string | null | undefined): string {
+  if (isSeasonDateTbd(iso)) return SEASON_DATE_TBA_LABEL;
+  return new Date(iso as string).toLocaleString("cs-CZ", {
     day: "numeric",
     month: "numeric",
     year: "numeric",
@@ -180,6 +183,49 @@ export function formatSeasonDateTime(iso: string): string {
     minute: "2-digit",
     timeZone: "Europe/Prague",
   });
+}
+
+/** Na veřejném webu vždy použij aktuální kódový harmonogram (Firestore může mít stará data). */
+export function overlaySeasonSchedule(season: SeasonDocument): SeasonDocument {
+  const isS4 =
+    season.id === S4_SEASON_ID ||
+    season.slug === S4_SEASON_SLUG ||
+    season.number === 4;
+  if (!isS4) return season;
+
+  return {
+    ...season,
+    disciplines: S4_DEFAULT_SCHEDULE.map((def) => {
+      const existing = season.disciplines?.find((d) => d.gameId === def.gameId);
+      return {
+        ...def,
+        qualifications: def.qualifications.map((q) => ({
+          ...q,
+          tournamentId:
+            existing?.qualifications.find((eq) => eq.round === q.round)?.tournamentId ??
+            q.tournamentId,
+        })),
+      };
+    }),
+  };
+}
+
+export function isSeason4Tournament(
+  seasonId: string | null | undefined,
+  name?: string | null
+): boolean {
+  if (seasonId === S4_SEASON_ID || seasonId === S4_SEASON_SLUG) return true;
+  return Boolean(name && /^S4\b/i.test(name.trim()));
+}
+
+/** Start zápasu na webu — u S4 jsou konkrétní termíny zatím TBA. */
+export function publicSeasonMatchStartsAtMs(
+  seasonId: string | null | undefined,
+  storedStartsAtMs: number | null | undefined,
+  name?: string | null
+): number | null {
+  if (isSeason4Tournament(seasonId, name)) return null;
+  return storedStartsAtMs ?? null;
 }
 
 export function seasonActiveGameIds(): GameId[] {

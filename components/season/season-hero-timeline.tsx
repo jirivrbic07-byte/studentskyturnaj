@@ -5,7 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import type { SeasonDisciplineSchedule, SeasonDocument } from "@/lib/seasons";
-import { formatSeasonDateTime, isSeasonRegistrationOpen } from "@/lib/seasons";
+import {
+  formatSeasonDateTime,
+  isSeasonDateTbd,
+  isSeasonRegistrationOpen,
+  S4_TOURNAMENT_STARTS_AT,
+  SEASON_DATE_TBA_LABEL,
+  TOURNAMENT_STARTS_AT_LABEL,
+} from "@/lib/seasons";
 import { gameLabel, type GameId } from "@/lib/games";
 import { getTournamentGameLogo } from "@/lib/tournament-game-logos";
 import { GlowButton } from "@/components/glow-button";
@@ -17,26 +24,40 @@ import {
 
 const QUAL_LETTERS = ["A", "B", "C", "D"] as const;
 
-function parseParts(iso: string) {
-  const d = new Date(iso);
+function parseParts(iso: string | null) {
+  if (isSeasonDateTbd(iso)) {
+    return {
+      day: SEASON_DATE_TBA_LABEL,
+      time: "",
+      full: SEASON_DATE_TBA_LABEL,
+    };
+  }
+  const d = new Date(iso as string);
+  const time = d.toLocaleTimeString("cs-CZ", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Prague",
+  });
   return {
-    day: d.toLocaleDateString("cs-CZ", { day: "numeric", month: "numeric", timeZone: "Europe/Prague" }),
-    time: d.toLocaleTimeString("cs-CZ", {
-      hour: "2-digit",
-      minute: "2-digit",
+    day: d.toLocaleDateString("cs-CZ", {
+      day: "numeric",
+      month: "numeric",
+      year: "numeric",
       timeZone: "Europe/Prague",
     }),
+    time: time === "00:00" ? "" : time,
     full: formatSeasonDateTime(iso),
   };
 }
 
 function phaseStatus(
-  startsAt: string,
+  startsAt: string | null,
   endsAt?: string
 ): "done" | "live" | "next" | "upcoming" {
+  if (isSeasonDateTbd(startsAt)) return "upcoming";
   const now = Date.now();
-  const start = Date.parse(startsAt);
-  const end = endsAt ? Date.parse(endsAt) : start + 4 * 60 * 60 * 1000;
+  const start = Date.parse(startsAt as string);
+  const end = endsAt && !isSeasonDateTbd(endsAt) ? Date.parse(endsAt) : start + 4 * 60 * 60 * 1000;
   if (now > end) return "done";
   if (now >= start && now <= end) return "live";
   if (now < start) return "upcoming";
@@ -62,7 +83,7 @@ type TimelineItemBase = {
   kind: "registration" | "qualification" | "playoff";
   title: string;
   subtitle?: string;
-  startsAt: string;
+  startsAt: string | null;
   endsAt?: string;
   href?: string;
   qualLetter?: string;
@@ -84,6 +105,13 @@ function buildTimeline(
       subtitle: "Zápis schváleného týmu kapitánem",
       startsAt: discipline.registration.opensAt,
       endsAt: discipline.registration.closesAt,
+    },
+    {
+      id: "tournament-start",
+      kind: "playoff" as const,
+      title: "Start turnaje",
+      subtitle: `Hraje se od ${TOURNAMENT_STARTS_AT_LABEL} · kvalifikace a zápasy budou upřesněny`,
+      startsAt: S4_TOURNAMENT_STARTS_AT,
     },
     ...discipline.qualifications.map((q) => ({
       id: `qual-${q.round}`,
@@ -172,10 +200,10 @@ function TimelineCard({
           </div>
         </div>
         <div className="text-right">
-          <p className="font-[family-name:var(--font-bebas)] text-3xl leading-none text-white">
+          <p className={`font-[family-name:var(--font-bebas)] leading-none text-white ${isSeasonDateTbd(item.startsAt) ? "text-lg" : "text-3xl"}`}>
             {parts.day}
           </p>
-          <p className="text-sm text-[#39FF14]">{parts.time}</p>
+          {parts.time ? <p className="text-sm text-[#39FF14]">{parts.time}</p> : null}
         </div>
       </div>
 
@@ -282,6 +310,7 @@ export function SeasonHero({
                 ? undefined
                 : PRIZE_POOL_TBD_MESSAGE,
             },
+            { label: "Start turnaje", value: TOURNAMENT_STARTS_AT_LABEL },
             { label: "Disciplíny", value: "CS2 + LoL" },
             { label: "Do pavouka", value: "16 týmů" },
             { label: "Kvalifikace", value: "4 kola" },
@@ -442,7 +471,7 @@ export function SeasonTimeline({
           </h2>
         </div>
         <p className="max-w-sm text-sm text-slate-500">
-          Každá fáze na vlastní kartě — klikni na kvalifikaci a přihlas tým přímo do turnaje.
+          Registrace je otevřená, start 1. 1. 2027. Termíny kvalifikací a zápasů budou upřesněny.
         </p>
       </div>
 

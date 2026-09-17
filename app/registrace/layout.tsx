@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/site-seo";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Registrace kapitána",
+  title: "Registrace",
   description:
-    "Založení účtu kapitána pro správu týmů v portálu ESPORTARENA TSV.",
+    "Založení účtu kapitána nebo hráče v portálu ESPORTARENA TSV.",
   path: "/registrace",
 });
 

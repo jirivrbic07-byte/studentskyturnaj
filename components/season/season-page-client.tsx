@@ -58,7 +58,15 @@ function LoadingSkeleton() {
   );
 }
 
-export function SeasonPageClient({ seasonSlug }: { seasonSlug: string }) {
+export function SeasonPageClient({
+  seasonSlug,
+  cmsTitle,
+  cmsIntro,
+}: {
+  seasonSlug: string;
+  cmsTitle?: string;
+  cmsIntro?: string;
+}) {
   const [data, setData] = useState<Payload | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -112,7 +120,11 @@ export function SeasonPageClient({ seasonSlug }: { seasonSlug: string }) {
   return (
     <div className="min-h-screen">
       <SeasonHero
-        season={season}
+        season={{
+          ...season,
+          label: cmsTitle?.trim() || season.label,
+          intro: cmsIntro?.trim() || season.intro,
+        }}
         gameId={tab}
         onGameChange={setTab}
         gameIds={gameTabs}
@@ -163,6 +175,7 @@ export function SeasonPageClient({ seasonSlug }: { seasonSlug: string }) {
             </h2>
             <p className="mt-2 text-slate-400">
               Čtyři kola, čtyři postupující z každého — celkem 16 týmů do pavouka.
+              Termíny kvalifikací budou upřesněny.
             </p>
           </motion.div>
           <SeasonQualCards tournaments={qualTournaments} gameId={tab} />

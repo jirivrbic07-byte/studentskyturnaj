@@ -60,12 +60,11 @@ export default function PrihlaseniPage() {
       className="mx-auto max-w-md px-4 py-20 sm:px-6"
     >
       <h1 className="font-[family-name:var(--font-bebas)] text-4xl tracking-wide text-white">
-        Přihlášení kapitána
+        Přihlášení
       </h1>
       <p className="mt-2 text-sm text-slate-400">
-        Účty zakládají pouze{" "}
-        <strong className="text-white">kapitáni týmů</strong>. Hráči se
-        neregistrují.
+        Přihlášení pozná, jestli jsi hráč, kapitán nebo administrátor, a otevře
+        ti správný portál.
       </p>
       <GlassCard className="mt-8">
         <form onSubmit={onSubmit} className="space-y-4">
@@ -119,7 +118,7 @@ export default function PrihlaseniPage() {
         <p className="mt-6 text-center text-sm text-slate-500">
           Nemáš účet?{" "}
           <Link href="/registrace" className="text-[#39FF14] hover:underline">
-            Registrace kapitána
+            Registrace
           </Link>
         </p>
       </GlassCard>

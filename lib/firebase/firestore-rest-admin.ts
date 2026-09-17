@@ -252,6 +252,7 @@ export async function listCollectionDocsRest(
   const token = await getGoogleAccessToken();
   const res = await fetch(`${collectionUrl(collectionPath)}?pageSize=${pageSize}`, {
     headers: authHeader(token),
+    cache: "no-store",
   });
   if (!res.ok) {
     const t = await res.text().catch(() => "");
@@ -265,7 +266,7 @@ export async function getDocRest(
   docPath: string
 ): Promise<(Record<string, unknown> & { id: string }) | null> {
   const token = await getGoogleAccessToken();
-  const res = await fetch(docUrl(docPath), { headers: authHeader(token) });
+  const res = await fetch(docUrl(docPath), { headers: authHeader(token), cache: "no-store" });
   if (res.status === 404) return null;
   if (!res.ok) {
     const t = await res.text().catch(() => "");

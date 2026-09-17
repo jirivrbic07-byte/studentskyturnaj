@@ -25,15 +25,77 @@ import { getFirebaseAuth, getFirebaseDb } from "@/lib/firebase/client";
 import { isFirebaseConfigured } from "@/lib/firebase/config";
 import type { CaptainProfile } from "@/lib/types";
 import { postCaptainEmail } from "@/lib/client-notifications";
+import type { AccountRole, PortalKind, SignupRole } from "@/lib/account-role";
+import { parseAccountRole, parseSignupRole, resolvePortalKind } from "@/lib/account-role";
+import {
+  ADMIN_PERMISSIONS,
+  hasAdminPermission,
+  type AdminPermission,
+  type ResolvedAdminAccess,
+} from "@/lib/admin-permissions";
+import { isClientAdminEmail } from "@/lib/admin-client";
+import { isSuperAdminEmail } from "@/lib/super-admin";
+
+export type ClientAccess = ResolvedAdminAccess & {
+  loading: boolean;
+  accountRole: AccountRole;
+  portalKind: PortalKind;
+  joinStatus: "none" | "pending" | "approved" | "rejected";
+  linkedTeamId: string | null;
+};
+
+const EMPTY_ACCESS: ClientAccess = {
+  loading: true,
+  isAdmin: false,
+  isSuperAdmin: false,
+  isEnvAdmin: false,
+  permissions: [],
+  accountRole: "captain",
+  portalKind: "captain",
+  joinStatus: "none",
+  linkedTeamId: null,
+};
+
+function applyPortal(access: ClientAccess): ClientAccess {
+  const portalKind = resolvePortalKind({
+    isAdmin: access.isAdmin,
+    accountRole: access.accountRole,
+  });
+  return {
+    ...access,
+    portalKind,
+    accountRole: portalKind === "admin" ? "admin" : parseAccountRole(access.accountRole),
+  };
+}
+
+function optimisticAccess(email: string | null | undefined): ClientAccess {
+  const superAdmin = isSuperAdminEmail(email ?? undefined);
+  const envAdmin = isClientAdminEmail(email);
+  const isAdmin = superAdmin || envAdmin;
+  return applyPortal({
+    loading: true,
+    isAdmin,
+    isSuperAdmin: superAdmin,
+    isEnvAdmin: envAdmin && !superAdmin,
+    permissions: isAdmin ? [...ADMIN_PERMISSIONS] : [],
+    accountRole: isAdmin ? "admin" : "captain",
+    portalKind: isAdmin ? "admin" : "captain",
+    joinStatus: "none",
+    linkedTeamId: null,
+  });
+}
 
 type AuthState = {
   user: User | null;
   profile: CaptainProfile | null;
+  access: ClientAccess;
   loading: boolean;
   firebaseReady: boolean;
   refreshProfile: () => Promise<void>;
+  refreshAccess: () => Promise<void>;
+  hasAdminPermission: (permission: AdminPermission) => boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, accountRole?: SignupRole) => Promise<void>;
   signOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   verifyResetCode: (oobCode: string) => Promise<string>;
@@ -50,15 +112,65 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<CaptainProfile | null>(null);
+  const [access, setAccess] = useState<ClientAccess>(EMPTY_ACCESS);
   const firebaseReady = isFirebaseConfigured();
   const [loading, setLoading] = useState(() => firebaseReady);
+
+  const loadAccess = useCallback(async (u: User) => {
+    setAccess((prev) => applyPortal({ ...optimisticAccess(u.email), accountRole: prev.accountRole }));
+    try {
+      const token = await u.getIdToken();
+      const res = await fetch("/api/auth/access", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      const j = (await res.json().catch(() => ({}))) as {
+        isAdmin?: boolean;
+        isSuperAdmin?: boolean;
+        isEnvAdmin?: boolean;
+        permissions?: AdminPermission[];
+        accountRole?: string;
+        portalKind?: string;
+        joinStatus?: ClientAccess["joinStatus"];
+        linkedTeamId?: string | null;
+      };
+      if (!res.ok) {
+        setAccess(applyPortal({ ...optimisticAccess(u.email), loading: false }));
+        return;
+      }
+      setAccess(
+        applyPortal({
+          loading: false,
+          isAdmin: Boolean(j.isAdmin) || j.portalKind === "admin",
+          isSuperAdmin: Boolean(j.isSuperAdmin),
+          isEnvAdmin: Boolean(j.isEnvAdmin),
+          permissions: Array.isArray(j.permissions) ? j.permissions : [],
+          accountRole: parseAccountRole(j.accountRole),
+          portalKind: "captain",
+          joinStatus: j.joinStatus ?? "none",
+          linkedTeamId: j.linkedTeamId ?? null,
+        })
+      );
+    } catch {
+      setAccess(applyPortal({ ...optimisticAccess(u.email), loading: false }));
+    }
+  }, []);
 
   const loadProfile = useCallback(async (u: User) => {
     if (!firebaseReady) return;
     const db = getFirebaseDb();
     const snap = await getDoc(doc(db, "users", u.uid));
     if (snap.exists()) {
-      setProfile(snap.data() as CaptainProfile);
+      const data = snap.data() as CaptainProfile;
+      setProfile(data);
+      setAccess((prev) =>
+        applyPortal({
+          ...prev,
+          accountRole: parseAccountRole(data.accountRole),
+          joinStatus: data.joinStatus ?? prev.joinStatus,
+          linkedTeamId: data.linkedTeamId ?? prev.linkedTeamId,
+        })
+      );
     } else {
       setProfile(null);
     }
@@ -100,19 +212,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(u);
       if (u) {
         await loadProfile(u);
-        await syncSessionCookie(u);
+        await Promise.all([syncSessionCookie(u), loadAccess(u)]);
       } else {
         setProfile(null);
+        setAccess({ ...EMPTY_ACCESS, loading: false });
         await syncSessionCookie(null);
       }
       setLoading(false);
     });
     return () => unsub();
-  }, [firebaseReady, loadProfile, syncSessionCookie]);
+  }, [firebaseReady, loadProfile, syncSessionCookie, loadAccess]);
+
+  const refreshAccess = useCallback(async () => {
+    if (user && firebaseReady) await loadAccess(user);
+  }, [user, firebaseReady, loadAccess]);
 
   const refreshProfile = useCallback(async () => {
-    if (user && firebaseReady) await loadProfile(user);
-  }, [user, firebaseReady, loadProfile]);
+    if (user && firebaseReady) {
+      await loadProfile(user);
+      await loadAccess(user);
+    }
+  }, [user, firebaseReady, loadProfile, loadAccess]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -123,8 +243,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signUp = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, accountRole: SignupRole = "captain") => {
       if (!firebaseReady) throw new Error("Firebase není nakonfigurováno.");
+      const role = parseSignupRole(accountRole);
       const checkRes = await fetch("/api/auth/check-registration", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -166,6 +287,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         eaAccount: "",
         isAdult: false,
         profileComplete: false,
+        accountRole: role,
+        joinStatus: "none",
+        linkedTeamId: null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -176,18 +300,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ email: cred.user.email }),
+        body: JSON.stringify({ email: cred.user.email, accountRole: role }),
       }).catch(() => {});
-      const welcome = await postCaptainEmail(token, {
-        kind: "welcome",
-        displayName: (cred.user.email ?? "kapitán").split("@")[0],
-      });
-      if (!welcome.ok) {
-        console.warn(
-          "[captain-email] welcome:",
-          welcome.error,
-          "— zkontroluj RESEND_API_KEY a RESEND_FROM na hostingu."
-        );
+      if (role === "captain") {
+        const welcome = await postCaptainEmail(token, {
+          kind: "welcome",
+          displayName: (cred.user.email ?? "kapitán").split("@")[0],
+        });
+        if (!welcome.ok) {
+          console.warn(
+            "[captain-email] welcome:",
+            welcome.error,
+            "— zkontroluj RESEND_API_KEY a RESEND_FROM na hostingu."
+          );
+        }
       }
     },
     [firebaseReady]
@@ -260,13 +386,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [firebaseReady]
   );
 
+  const hasPermissionFn = useCallback(
+    (permission: AdminPermission) => hasAdminPermission(access, permission),
+    [access]
+  );
+
   const value = useMemo(
     () => ({
       user,
       profile,
+      access,
       loading,
       firebaseReady,
       refreshProfile,
+      refreshAccess,
+      hasAdminPermission: hasPermissionFn,
       signIn,
       signUp,
       signOut,
@@ -278,9 +412,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [
       user,
       profile,
+      access,
       loading,
       firebaseReady,
       refreshProfile,
+      refreshAccess,
+      hasPermissionFn,
       signIn,
       signUp,
       signOut,

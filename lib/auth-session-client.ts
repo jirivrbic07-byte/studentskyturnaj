@@ -1,5 +1,6 @@
 import type { User } from "firebase/auth";
 import { isClientAdminEmail } from "@/lib/admin-client";
+import { resolvePortalKind, type PortalKind } from "@/lib/account-role";
 
 /** Nastaví HttpOnly session cookie pro Edge middleware (/admin, /edit). */
 export async function syncFirebaseSessionCookie(user: User): Promise<void> {
@@ -17,9 +18,32 @@ export async function syncFirebaseSessionCookie(user: User): Promise<void> {
 
 type AppRouter = { replace: (href: string) => void };
 
+async function detectPortalKind(user: User): Promise<PortalKind> {
+  if (isClientAdminEmail(user.email)) return "admin";
+  try {
+    const token = await user.getIdToken();
+    const res = await fetch("/api/auth/access", {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    const j = (await res.json().catch(() => ({}))) as {
+      isAdmin?: boolean;
+      portalKind?: string;
+      accountRole?: string;
+    };
+    if (!res.ok) return "captain";
+    return resolvePortalKind({
+      isAdmin: Boolean(j.isAdmin) || j.portalKind === "admin" || j.accountRole === "admin",
+      accountRole: j.accountRole,
+    });
+  } catch {
+    return "captain";
+  }
+}
+
 /**
- * Po přihlášení: session cookie, pak přesměrování.
- * Admin → /admin přes celou stránku (cookie se spolehlivě pošle do middleware).
+ * Po přihlášení / registraci: session cookie a přesměrování podle role.
+ * Admin → /admin, kapitán i hráč → /dashboard (tam se UI rozliší samo).
  */
 export async function completeAuthLanding(
   user: User,
@@ -30,7 +54,8 @@ export async function completeAuthLanding(
   } catch {
     /* i bez cookie zkusíme admin URL — může selhat v middleware */
   }
-  if (isClientAdminEmail(user.email)) {
+  const kind = await detectPortalKind(user);
+  if (kind === "admin") {
     if (typeof window !== "undefined") {
       window.location.assign("/admin");
     }

@@ -14,9 +14,13 @@ import Link from "next/link";
 import { GAMES } from "@/lib/games";
 import { gameNickPlaceholder } from "@/lib/game-player-accounts";
 import { isSeasonActiveGame } from "@/lib/season-games";
+import { PlayerTeamLinkPanel } from "@/components/player-team-link-panel";
+import { parseAccountRole } from "@/lib/account-role";
 
 export default function DashboardProfilPage() {
-  const { user, profile, refreshProfile, firebaseReady } = useAuth();
+  const { user, profile, refreshProfile, firebaseReady, access } = useAuth();
+  const isPlayer =
+    access.accountRole === "player" || parseAccountRole(profile?.accountRole) === "player";
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
@@ -67,13 +71,15 @@ export default function DashboardProfilPage() {
       setError("Vyplň jméno, příjmení a kontaktní údaje (telefon, Discord).");
       return;
     }
-    if (!isAdult && !parentFile && !profile?.parentConsentUrl) {
-      setError("Nezletilí musí nahrát souhlas zákonného zástupce.");
-      return;
-    }
-    if (!studentFile && !profile?.studentCertUrl) {
-      setError("Nahraj potvrzení studenta (ISIC / Bakaláři / jiný doklad).");
-      return;
+    if (!isPlayer) {
+      if (!isAdult && !parentFile && !profile?.parentConsentUrl) {
+        setError("Nezletilí musí nahrát souhlas zákonného zástupce.");
+        return;
+      }
+      if (!studentFile && !profile?.studentCertUrl) {
+        setError("Nahraj potvrzení studenta (ISIC / Bakaláři / jiný doklad).");
+        return;
+      }
     }
 
     setPending(true);
@@ -237,15 +243,25 @@ export default function DashboardProfilPage() {
       className="mx-auto max-w-xl px-4 py-10 sm:px-6"
     >
       <h1 className="font-[family-name:var(--font-bebas)] text-4xl tracking-wide text-white">
-        Profil kapitána
+        {isPlayer ? "Nastavení hráče" : "Profil kapitána"}
       </h1>
       <p className="mt-2 text-sm text-slate-400">
-        Tyto údaje použijeme pro komunikaci a ověření. Novinky a termíny turnaje sleduj v{" "}
-        <Link href="/oznameni" className="text-[#39FF14] hover:underline">
-          Oznámeních
-        </Link>
-        .
+        {isPlayer
+          ? "Doplň kontakty a propoj se s týmem, který už kapitán založil. Po schválení se ti sem propsají údaje ze soupisky."
+          : "Tyto údaje použijeme pro komunikaci a ověření. Novinky a termíny turnaje sleduj v "}
+        {!isPlayer ? (
+          <Link href="/oznameni" className="text-[#39FF14] hover:underline">
+            Oznámeních
+          </Link>
+        ) : null}
+        {!isPlayer ? "." : null}
       </p>
+
+      {isPlayer ? (
+        <div className="mt-8">
+          <PlayerTeamLinkPanel />
+        </div>
+      ) : null}
 
       <GlassCard className="mt-8">
         <form onSubmit={onSubmit} className="space-y-4">
@@ -307,6 +323,8 @@ export default function DashboardProfilPage() {
               required
             />
           </div>
+          {!isPlayer ? (
+          <>
           <div className="rounded-xl border border-white/10 bg-black/20 p-4">
             <h2 className="font-[family-name:var(--font-bebas)] text-xl text-white">
               Herní účty
@@ -408,6 +426,13 @@ export default function DashboardProfilPage() {
                 className="mt-1 border-0 bg-transparent p-0 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-[#39FF14]/20 file:px-3 file:py-2 file:text-[#39FF14]"
               />
             </div>
+          ) : null}
+          </>
+          ) : access.joinStatus === "approved" ? (
+            <p className="rounded-lg border border-white/10 bg-black/20 p-3 text-sm text-slate-400">
+              Jméno, přezdívka a doklady jsou ze soupisky kapitána. Tady si
+              upravuješ hlavně telefon a Discord.
+            </p>
           ) : null}
           {error ? (
             <p className="text-sm text-red-400" role="alert">

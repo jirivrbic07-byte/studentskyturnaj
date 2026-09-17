@@ -27,6 +27,7 @@ export async function POST(
       teamName?: string;
       captainEmail?: string;
       gameId?: GameId;
+      approvedAt?: string;
     };
     const gid = data.gameId ?? "cs2";
     const gLabel = gameLabel(gid);
@@ -34,6 +35,7 @@ export async function POST(
 
     await upsertDocRest(`teams/${id}`, {
       status: "approved",
+      approvedAt: data.approvedAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
 

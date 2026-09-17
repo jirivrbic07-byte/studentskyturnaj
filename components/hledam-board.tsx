@@ -98,7 +98,13 @@ function postStatsLabel(post: Post): string {
   return parts.join(" · ");
 }
 
-export function HledamBoard() {
+export function HledamBoard({
+  heading,
+  intro,
+}: {
+  heading?: string;
+  intro?: string;
+}) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -277,12 +283,11 @@ export function HledamBoard() {
       className="mx-auto max-w-2xl px-4 py-16 sm:px-6"
     >
       <h1 className="font-[family-name:var(--font-bebas)] text-4xl tracking-wide text-white sm:text-5xl">
-        Hledám tým / hráče
+        {heading || "Hledám tým / hráče"}
       </h1>
-      <p className="mt-2 text-sm text-slate-400">
-        Nástěnka podle hry — v Sezóně 4 CS2 a League of Legends. Kontakt výhradně
-        na <span className="text-[#39FF14]">Discordu</span>. Inzeráty se po 60 dnech
-        automaticky maží.
+      <p className="mt-2 text-sm text-slate-400 whitespace-pre-line">
+        {intro ||
+          "Nástěnka podle hry — v Sezóně 4 CS2 a League of Legends. Kontakt výhradně na Discordu. Inzeráty se po 60 dnech automaticky maží."}
       </p>
 
       {!isFirebaseConfigured() ? (

@@ -1,9 +1,12 @@
+import { unstable_noStore as noStore } from "next/cache";
 import {
   CMS_DEFAULTS,
+  isCmsSlug,
+  isSimpleCmsSlug,
   type CmsSlug,
   type HomeCms,
-  type OznameniCms,
   type PravidlaCms,
+  type SimplePageCms,
 } from "@/lib/cms-defaults";
 
 function deepMerge<T extends Record<string, unknown>>(
@@ -18,15 +21,10 @@ function deepMerge<T extends Record<string, unknown>>(
   return out as T;
 }
 
-export async function getPageContent(slug: CmsSlug): Promise<HomeCms | PravidlaCms | OznameniCms> {
+export async function getPageContent(slug: CmsSlug): Promise<HomeCms | PravidlaCms | SimplePageCms> {
+  noStore();
   const defaults = CMS_DEFAULTS[slug];
-  // Lokální vývoj má být vždy okamžitě dostupný i bez externích API volání.
-  if (
-    process.env.NODE_ENV !== "production" &&
-    process.env.USE_REMOTE_CMS_IN_DEV !== "1"
-  ) {
-    return defaults;
-  }
+
   try {
     const { getDocRest } = await import("@/lib/firebase/firestore-rest-admin");
     const data = await getDocRest(`page_content/${slug}`);
@@ -37,11 +35,22 @@ export async function getPageContent(slug: CmsSlug): Promise<HomeCms | PravidlaC
         return deepMerge(defaults as Record<string, unknown>, patch) as
           | HomeCms
           | PravidlaCms
-          | OznameniCms;
+          | SimplePageCms;
       }
     }
   } catch {
     /* Při chybě API nech default CMS obsah */
   }
   return defaults;
+}
+
+export async function getSimplePageContent(slug: string): Promise<SimplePageCms> {
+  if (!isSimpleCmsSlug(slug)) {
+    return { title: "", intro: "" };
+  }
+  return (await getPageContent(slug)) as SimplePageCms;
+}
+
+export function assertCmsSlug(slug: string): CmsSlug | null {
+  return isCmsSlug(slug) ? slug : null;
 }

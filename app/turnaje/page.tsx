@@ -1,71 +1,18 @@
-"use client";
+import type { Metadata } from "next";
+import { TournamentListPageClient } from "@/components/tournaments/tournament-list-page-client";
+import { getSimplePageContent } from "@/lib/get-cms-page";
+import { pageMetadata } from "@/lib/site-seo";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import type { GameId } from "@/lib/games";
-import {
-  TournamentListSections,
-  type TournamentListItem,
-} from "@/components/tournaments/tournament-list-sections";
+export const dynamic = "force-dynamic";
 
-export default function TurnajePublicPage() {
-  const [rows, setRows] = useState<TournamentListItem[]>([]);
-  const [err, setErr] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+export const metadata: Metadata = pageMetadata({
+  title: "Turnaje",
+  description:
+    "Přehled aktuálních a nadcházejících turnajů ESPORTARENA TSV podle her.",
+  path: "/turnaje",
+});
 
-  useEffect(() => {
-    void fetch("/api/tournaments/public", { cache: "no-store" })
-      .then(async (res) => {
-        const j = (await res.json().catch(() => ({}))) as {
-          tournaments?: TournamentListItem[];
-          error?: string;
-        };
-        if (!res.ok) {
-          throw new Error(j.error ?? `Chyba (${res.status})`);
-        }
-        setRows(
-          (j.tournaments ?? []).map((t) => ({
-            ...t,
-            gameId: (t.gameId ?? "cs2") as GameId,
-          }))
-        );
-      })
-      .catch((e: Error) => setErr(e.message))
-      .finally(() => setLoading(false));
-  }, []);
-
-  return (
-    <motion.main
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="mx-auto max-w-3xl px-4 py-12 sm:px-6"
-    >
-      <h1 className="font-[family-name:var(--font-bebas)] text-4xl tracking-wide text-white sm:text-5xl">
-        Turnaje
-      </h1>
-      <p className="mt-3 text-sm text-slate-400">
-        Aktivní turnaje jsou nadcházející — u kvalifikací se můžeš přihlásit. Neaktivní už
-        proběhly. Jsi kapitán? Po přihlášení najdeš stejný přehled v{" "}
-        <Link href="/dashboard/turnaje" className="text-[#39FF14] hover:underline">
-          kapitánském portálu
-        </Link>
-        .
-      </p>
-
-      {loading ? (
-        <p className="mt-10 text-slate-500">Načítání…</p>
-      ) : err ? (
-        <p className="mt-10 text-sm text-red-400" role="alert">
-          {err}
-        </p>
-      ) : (
-        <TournamentListSections
-          rows={rows}
-          hrefPrefix="/turnaje"
-          emptyMessage="Zatím tu nejsou žádné zveřejněné turnaje. Sleduj Oznámení."
-        />
-      )}
-    </motion.main>
-  );
+export default async function TurnajePublicPage() {
+  const cms = await getSimplePageContent("turnaje");
+  return <TournamentListPageClient heading={cms.title} intro={cms.intro} />;
 }

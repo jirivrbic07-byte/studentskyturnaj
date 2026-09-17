@@ -4,28 +4,27 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useAdminTempBypass } from "@/contexts/admin-temp-context";
-import { isClientAdminEmail } from "@/lib/admin-client";
 import { AdminAnnouncementsPanel } from "@/components/admin-announcements-panel";
 import { PortalPageHeader } from "@/components/portal-page-header";
 
 export default function AdminAnnouncementsPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, access } = useAuth();
   const tempBypass = useAdminTempBypass();
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || access.loading) return;
     if (tempBypass) return;
     if (!user) {
       router.replace("/prihlaseni");
       return;
     }
-    if (!isClientAdminEmail(user.email)) {
+    if (!access.isAdmin) {
       router.replace("/zakazano");
     }
-  }, [user, loading, router, tempBypass]);
+  }, [user, loading, access.loading, access.isAdmin, router, tempBypass]);
 
-  if (loading) {
+  if (loading || access.loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-slate-500">
         Načítání…
@@ -33,7 +32,7 @@ export default function AdminAnnouncementsPage() {
     );
   }
 
-  if (!tempBypass && (!user || !isClientAdminEmail(user.email))) {
+  if (!tempBypass && (!user || !access.isAdmin)) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-slate-500">
         Načítání…

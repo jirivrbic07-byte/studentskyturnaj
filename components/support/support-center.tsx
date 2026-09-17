@@ -15,7 +15,13 @@ function normalize(s: string): string {
     .replace(/\p{M}/gu, "");
 }
 
-export function SupportCenter() {
+export function SupportCenter({
+  heading,
+  intro,
+}: {
+  heading?: string;
+  intro?: string;
+}) {
   const [category, setCategory] = useState<SupportCategoryId | "all">("all");
   const [query, setQuery] = useState("");
   const [articles, setArticles] = useState<SupportArticle[]>([]);
@@ -129,8 +135,11 @@ export function SupportCenter() {
             NAJDI ODPOVĚĎ NA JAKOUKOLI OTÁZKU
           </p>
           <h1 className="mt-3 font-[family-name:var(--font-bebas)] text-4xl tracking-[0.08em] text-white sm:text-5xl md:text-6xl">
-            CENTRUM PODPORY
+            {heading || "CENTRUM PODPORY"}
           </h1>
+          {intro ? (
+            <p className="mx-auto mt-4 max-w-2xl text-sm text-slate-400">{intro}</p>
+          ) : null}
           <div className="mx-auto mt-10 flex max-w-4xl flex-col gap-3 sm:flex-row sm:items-stretch sm:gap-3">
             <div className="relative min-w-0 flex-1">
               <span

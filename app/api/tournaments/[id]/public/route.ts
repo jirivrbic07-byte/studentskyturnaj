@@ -7,6 +7,7 @@ import {
 } from "@/lib/tournament-faceit";
 import { parseTournamentPhase } from "@/lib/tournaments";
 import { displayPrizePoolText } from "@/lib/prize-pool";
+import { publicSeasonMatchStartsAtMs } from "@/lib/seasons";
 import { verifyFirebaseClientIdTokenFromRequest } from "@/lib/firebase/verify-client-id-token";
 import { getDocRest, listCollectionDocsRest } from "@/lib/firebase/firestore-rest-admin";
 
@@ -40,9 +41,13 @@ export async function GET(request: Request, ctx: Ctx) {
       );
     }
 
-    const startsAtMs = parseTournamentStartsAtMs(t.startsAt);
+    const startsAtMs = publicSeasonMatchStartsAtMs(
+      typeof t.seasonId === "string" ? t.seasonId : null,
+      parseTournamentStartsAtMs(t.startsAt),
+      typeof t.name === "string" ? t.name : null
+    );
     const user = await verifyFirebaseClientIdTokenFromRequest(request);
-    const captainUid = user?.uid ?? null;
+    const viewerUid = user?.uid ?? null;
 
     const registrationRows = await listCollectionDocsRest(
       `tournaments/${id}/registrations`,
@@ -65,10 +70,17 @@ export async function GET(request: Request, ctx: Ctx) {
       })
       .sort((a, b) => a.teamName.localeCompare(b.teamName, "cs"));
 
-    const viewerHasRegisteredTeam = Boolean(
-      captainUid &&
-        registrations.some((r) => r.captainId === captainUid)
+    let viewerHasRegisteredTeam = Boolean(
+      viewerUid && registrations.some((r) => r.captainId === viewerUid)
     );
+    if (!viewerHasRegisteredTeam && viewerUid) {
+      const profile = await getDocRest(`users/${viewerUid}`);
+      const linkedTeamId = profile?.linkedTeamId ? String(profile.linkedTeamId) : "";
+      const approved = String(profile?.joinStatus ?? "") === "approved";
+      viewerHasRegisteredTeam = Boolean(
+        approved && linkedTeamId && registrations.some((r) => r.teamId === linkedTeamId)
+      );
+    }
 
     const faceitResolved = resolveFaceitHubUrl(
       t.faceitUrl,

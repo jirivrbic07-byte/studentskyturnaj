@@ -20,6 +20,9 @@ import { TeamRegistrationForm } from "@/components/team-registration-form";
 import { GameComingSoon } from "@/components/game-coming-soon";
 import { GlassCard } from "@/components/glass-card";
 import { GlowButton } from "@/components/glow-button";
+import { CaptainJoinRequestsPanel } from "@/components/captain-join-requests-panel";
+import { PlayerTeamReadOnly } from "@/components/player-team-read-only";
+import { parseAccountRole } from "@/lib/account-role";
 
 type TeamSnap = {
   id: string;
@@ -41,7 +44,9 @@ function statusClass(s: TeamStatus) {
 }
 
 export default function DashboardTymyPage() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, access } = useAuth();
+  const isPlayer =
+    access.accountRole === "player" || parseAccountRole(profile?.accountRole) === "player";
   const [teams, setTeams] = useState<TeamSnap[]>([]);
   const [loadingTeams, setLoadingTeams] = useState(true);
   const [expanded, setExpanded] = useState<GameId | null>(null);
@@ -93,8 +98,29 @@ export default function DashboardTymyPage() {
       <p className="p-10 text-center text-slate-500">
         {!isFirebaseConfigured()
           ? "Nakonfiguruj Firebase."
-          : "Načti profil kapitána."}
+          : "Načti profil."}
       </p>
+    );
+  }
+
+  if (isPlayer) {
+    return (
+      <motion.main
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mx-auto max-w-3xl px-4 py-10 sm:px-6"
+      >
+        <h1 className="font-[family-name:var(--font-bebas)] text-4xl tracking-wide text-white sm:text-5xl">
+          Můj tým
+        </h1>
+        <p className="mt-3 text-sm text-slate-400">
+          Můžeš si všechno proklikat. Zakládat nebo upravovat tým nemůžeš — to
+          zůstává na kapitánovi.
+        </p>
+        <div className="mt-8">
+          <PlayerTeamReadOnly />
+        </div>
+      </motion.main>
     );
   }
 
@@ -227,6 +253,8 @@ export default function DashboardTymyPage() {
           })
         )}
       </div>
+
+      <CaptainJoinRequestsPanel />
 
       <p className="mt-10 text-center text-xs text-slate-600">
         <Link href="/dashboard" className="hover:text-slate-400">

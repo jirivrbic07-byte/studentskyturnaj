@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <title>ESPORTARENA TSV · Sezóna 4 · Partner deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #070707;
+      --card: #101010;
+      --line: rgba(255,255,255,.1);
+      --green: #39FF14;
+      --green-dim: rgba(57,255,20,.14);
+      --muted: #94a3b8;
+      --white: #f8fafc;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: #000; color: var(--white); font-family: Manrope, system-ui, sans-serif; }
+    .slide {
+      width: 297mm;
+      height: 210mm;
+      padding: 14mm 16mm 12mm;
+      background:
+        radial-gradient(ellipse at 12% -10%, rgba(57,255,20,.16), transparent 46%),
+        radial-gradient(ellipse at 100% 110%, rgba(57,255,20,.08), transparent 42%),
+        var(--bg);
+      page-break-after: always;
+      break-after: page;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .slide:last-child { page-break-after: auto; }
+    h1, h2, .bebas { font-family: "Bebas Neue", sans-serif; font-weight: 400; letter-spacing: .04em; }
+    .kicker {
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+    }
+    .muted { color: var(--muted); }
+    .row { display: flex; gap: 12px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.015));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px 18px;
+    }
+    .stat { font-family: "Bebas Neue", sans-serif; font-size: 42px; line-height: .9; color: var(--green); }
+    .stat-label { margin-top: 8px; font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+    .foot {
+      margin-top: auto;
+      padding-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #64748b;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .bar-wrap { display: flex; align-items: flex-end; gap: 14px; }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; }
+    .bar-track {
+      width: 100%;
+      height: 128px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .bar {
+      width: 46px;
+      min-height: 8px;
+      border-radius: 8px 8px 3px 3px;
+      background: linear-gradient(180deg, #b8ff9a, var(--green) 40%, #1f8f12);
+      box-shadow: 0 0 18px rgba(57,255,20,.25);
+    }
+    .bar.target {
+      background: repeating-linear-gradient(135deg, rgba(57,255,20,.15), rgba(57,255,20,.15) 6px, rgba(57,255,20,.45) 6px, rgba(57,255,20,.45) 12px);
+      border: 1.5px solid var(--green);
+      box-shadow: none;
+    }
+    .partner-chip {
+      background: #f3f3f3;
+      border-radius: 16px;
+      padding: 18px 20px;
+      min-height: 92px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .partner-chip.dark {
+      background: #111;
+      border: 1px solid rgba(255,255,255,.16);
+    }
+    .partner-chip img {
+      width: auto;
+      max-width: 92%;
+      height: auto;
+      max-height: 56px;
+      object-fit: contain;
+      display: block;
+    }
+    .partner-chip img.mark {
+      max-height: 72px;
+    }
+    .partner-chip .partner-name {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+    .partner-chip:not(.dark) .partner-name { color: #475569; }
+    .photos {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .photos img {
+      width: 100%;
+      height: 64mm;
+      object-fit: cover;
+      border-radius: 14px;
+      display: block;
+    }
+    .logo-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      width: 100%;
+      align-items: stretch;
+    }
+    .bar-val { font-family: "Bebas Neue", sans-serif; font-size: 20px; color: var(--green); margin-bottom: 6px; }
+    .bar-name { margin-top: 8px; font-size: 12px; font-weight: 700; color: #cbd5e1; }
+    .bar-sub { font-size: 10px; color: #64748b; margin-top: 2px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(57,255,20,.35);
+      background: var(--green-dim);
+      color: var(--green);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .check { color: var(--green); font-weight: 800; margin-right: 8px; }
+    ul.clean { list-style: none; }
+    ul.clean li { display: flex; align-items: flex-start; gap: 10px; margin: 10px 0; font-size: 15px; line-height: 1.45; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+      margin-top: 7px; flex: 0 0 auto;
+    }
+    img.logo { display: block; object-fit: contain; }
+    @page { size: A4 landscape; margin: 0; }
+  </style>
+</head>
+<body>
+
+  <!-- 1 COVER -->
+  <section class="slide">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <img class="logo" src="loga/tsv.png" alt="TSV ESPORTARENA" style="height:128px;" />
+      <div style="text-align:right;">
+        <div class="kicker">Partner deck · 2026 / 2027</div>
+        <p class="muted" style="margin-top:8px; font-size:13px;">Studentský esport · Česko &amp; Slovensko</p>
+      </div>
+    </div>
+    <div style="margin-top:28px; max-width:210mm;">
+      <p class="kicker">Sezóna 4</p>
+      <h1 style="font-size:86px; line-height:.86; margin-top:10px;">Největší školní<br />esportová liga<br /><span style="color:var(--green);">v Česku i na Slovensku</span></h1>
+      <p class="muted" style="margin-top:18px; font-size:18px; max-width:180mm; line-height:1.5;">
+        Oficiální prezentace pro partnery. Registrace od 1. 9. 2026, start sezóny 1. 1. 2027.
+        CS2 a League of Legends, oficiální spolupráce s Faceit, LAN finále v aréně.
+      </p>
+    </div>
+    <div class="grid-4" style="margin-top:28px;">
+      <div class="card"><div class="stat">150</div><div class="stat-label">Škol v S3</div></div>
+      <div class="card"><div class="stat">750</div><div class="stat-label">Hráčů v S3</div></div>
+      <div class="card"><div class="stat">120k</div><div class="stat-label">Kč prize pool S3</div></div>
+      <div class="card"><div class="stat">500</div><div class="stat-label">Cíl startů S4</div></div>
+    </div>
+    <div class="foot"><span>ESPORTARENA TSV · Důvěrné podklady pro partnery</span><span>01 / 10</span></div>
+  </section>
+
+  <!-- 2 O TURNAJI -->
+  <section class="slide">
+    <p class="kicker">O projektu</p>
+    <h2 style="font-size:52px; margin-top:6px;">Školy hrají o prestiž. My stavíme ligu.</h2>
+    <div class="grid-2" style="margin-top:18px; flex:1;">
+      <div class="card">
+        <p class="kicker">Co to je</p>
+        <p style="margin-top:12px; font-size:16px; line-height:1.55;">
+          ESPORTARENA TSV je studentský turnaj pro <strong>základní, střední, vyšší odborné i vysoké školy</strong>
+          v Česku a na Slovensku. Kapitán registruje tým, soupiska se ověřuje, zápasy mají jasná pravidla.
+        </p>
+        <ul class="clean" style="margin-top:16px;">
+          <li><span class="dot"></span>Z jedné školy může jít víc týmů — každá škola může mít více soupisek</li>
+          <li><span class="dot"></span>5v5 formát · 5 hráčů na tým</li>
+          <li><span class="dot"></span>Aktivní disciplíny Sezóny 4: Counter-Strike 2 a League of Legends</li>
+          <li><span class="dot"></span>Kvalifikace online → pavouk 16 týmů → LAN semifinále, finále a zápas o 3. místo</li>
+          <li><span class="dot"></span>Pořádá EsportArena Plzeň · oficiální web studentskyturnaj.cz</li>
+        </ul>
+      </div>
+      <div class="card">
+        <p class="kicker">Proč to funguje</p>
+        <p style="margin-top:12px; font-size:16px; line-height:1.55;">
+          Není to náhodný event. Je to opakovaná sezónní soutěž, která roste každý rok —
+          více škol, více hráčů, silnější stream i sociální sítě.
+        </p>
+        <div class="grid-2" style="margin-top:18px;">
+          <div style="border:1px solid var(--line); border-radius:12px; padding:14px;">
+            <div class="stat" style="font-size:34px;">CZ + SK</div>
+            <div class="stat-label">Dva trhy, jedna liga</div>
+          </div>
+          <div style="border:1px solid var(--line); border-radius:12px; padding:14px;">
+            <div class="stat" style="font-size:34px;">STUDENTI</div>
+            <div class="stat-label">Školy, které žijí esports</div>
+          </div>
+          <div style="border:1px solid var(--line); border-radius:12px; padding:14px;">
+            <div class="stat" style="font-size:34px;">LAN</div>
+            <div class="stat-label">Finále v reálné aréně</div>
+          </div>
+          <div style="border:1px solid var(--line); border-radius:12px; padding:14px;">
+            <div class="stat" style="font-size:34px;">FACEIT</div>
+            <div class="stat-label">Oficiální spolupráce</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span>ESPORTARENA TSV · Sezóna 4</span><span>02 / 10</span></div>
+  </section>
+
+  <!-- 3 RŮST ŠKOL A HRÁČŮ -->
+  <section class="slide">
+    <p class="kicker">Růst účasti</p>
+    <h2 style="font-size:48px; margin-top:6px;">Za tři sezóny 3× více škol i hráčů</h2>
+    <p class="muted" style="margin-top:8px; font-size:14px;">Každý tým má 5 hráčů. Z jedné školy může jít víc týmů. Čísla S1–S3 jsou historická, S4 je cíl.</p>
+    <div class="grid-2" style="margin-top:18px;">
+      <div class="card">
+        <p class="kicker">Školy v turnaji</p>
+        <div class="bar-wrap" style="margin-top:18px;">
+          <div class="bar-col"><div class="bar-val">50</div><div class="bar-track"><div class="bar" style="height:33%"></div></div><div class="bar-name">S1</div><div class="bar-sub">50 škol</div></div>
+          <div class="bar-col"><div class="bar-val">100</div><div class="bar-track"><div class="bar" style="height:67%"></div></div><div class="bar-name">S2</div><div class="bar-sub">100 škol</div></div>
+          <div class="bar-col"><div class="bar-val">150</div><div class="bar-track"><div class="bar" style="height:100%"></div></div><div class="bar-name">S3</div><div class="bar-sub">150 škol</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <p class="kicker">Hráči (5 na tým)</p>
+        <div class="bar-wrap" style="margin-top:18px;">
+          <div class="bar-col"><div class="bar-val">250</div><div class="bar-track"><div class="bar" style="height:10%"></div></div><div class="bar-name">S1</div><div class="bar-sub">250 hráčů</div></div>
+          <div class="bar-col"><div class="bar-val">500</div><div class="bar-track"><div class="bar" style="height:20%"></div></div><div class="bar-name">S2</div><div class="bar-sub">500 hráčů</div></div>
+          <div class="bar-col"><div class="bar-val">750</div><div class="bar-track"><div class="bar" style="height:30%"></div></div><div class="bar-name">S3</div><div class="bar-sub">750 hráčů</div></div>
+          <div class="bar-col"><div class="bar-val">2 500</div><div class="bar-track"><div class="bar target" style="height:100%"></div></div><div class="bar-name">S4 cíl</div><div class="bar-sub">500 startů</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-top:14px;">
+      <div class="card"><div class="stat" style="font-size:36px;">+200 %</div><div class="stat-label">Školy S1 → S3</div></div>
+      <div class="card"><div class="stat" style="font-size:36px;">10×</div><div class="stat-label">Hráči S1 → cíl S4</div></div>
+      <div class="card"><div class="stat" style="font-size:36px;">ZŠ–VŠ</div><div class="stat-label">Nově celá škála škol CZ/SK</div></div>
+    </div>
+    <div class="foot"><span>Zdroj: interní statistiky organizátora · 5 hráčů na tým · více týmů ze školy</span><span>03 / 10</span></div>
+  </section>
+
+  <!-- 4 STARTY -->
+  <section class="slide">
+    <p class="kicker">Kvalifikace</p>
+    <h2 style="font-size:48px; margin-top:6px;">Starty rostou. Sezóna 4 míří na 500.</h2>
+    <div class="grid-2" style="margin-top:18px; align-items:stretch;">
+      <div class="card">
+        <p class="kicker">Počet startů v kvalifikacích</p>
+        <div class="bar-wrap" style="height:auto; margin-top:20px;">
+          <div class="bar-col"><div class="bar-val">50</div><div class="bar-track"><div class="bar" style="height:10%"></div></div><div class="bar-name">S1</div></div>
+          <div class="bar-col"><div class="bar-val">100</div><div class="bar-track"><div class="bar" style="height:20%"></div></div><div class="bar-name">S2</div></div>
+          <div class="bar-col"><div class="bar-val">200</div><div class="bar-track"><div class="bar" style="height:40%"></div></div><div class="bar-name">S3</div></div>
+          <div class="bar-col"><div class="bar-val">500</div><div class="bar-track"><div class="bar target" style="height:100%"></div></div><div class="bar-name">S4 cíl</div></div>
+        </div>
+        <p class="muted" style="margin-top:14px; font-size:13px;">S4 cíl odpovídá otevření turnaje pro ZŠ, SŠ, VOŠ i VŠ v Česku i na Slovensku.</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="card">
+          <p class="kicker">Prize pool</p>
+          <p style="font-family:'Bebas Neue'; font-size:48px; color:var(--green); margin-top:8px;">120 000 Kč</p>
+          <p class="muted" style="margin-top:6px; font-size:14px; line-height:1.45;">Minulá sezóna (S3). Prize pool Sezóny 4 se teprve uzavírá — proto ho v této prezentaci neuvádíme jako slib.</p>
+        </div>
+        <div class="card" style="flex:1;">
+          <p class="kicker">Formát, který sponzor vidí</p>
+          <ul class="clean">
+            <li><span class="dot"></span>4 kvalifikační kola · z každého postupují 4 týmy</li>
+            <li><span class="dot"></span>16 týmů v pavouku</li>
+            <li><span class="dot"></span>LAN: semifinále, finále, zápas o 3. místo</li>
+            <li><span class="dot"></span>Celý turnaj se hraje na Faceit díky oficiální spolupráci</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span>Start = přihlášený tým do kvalifikace</span><span>04 / 10</span></div>
+  </section>
+
+  <!-- 5 STREAM -->
+  <section class="slide">
+    <p class="kicker">Dosah · stream</p>
+    <h2 style="font-size:48px; margin-top:6px;">Diváci rostou. S4 jde na Kick.</h2>
+    <div class="grid-2" style="margin-top:16px;">
+      <div class="card">
+        <p class="kicker">Průměr diváků na Twitchi</p>
+        <div class="bar-wrap" style="margin-top:18px;">
+          <div class="bar-col"><div class="bar-val">250</div><div class="bar-track"><div class="bar" style="height:63%"></div></div><div class="bar-name">S1</div><div class="bar-sub">vlastní stream</div></div>
+          <div class="bar-col"><div class="bar-val">285</div><div class="bar-track"><div class="bar" style="height:71%"></div></div><div class="bar-name">S2</div><div class="bar-sub">vlastní stream</div></div>
+          <div class="bar-col"><div class="bar-val">400</div><div class="bar-track"><div class="bar" style="height:100%"></div></div><div class="bar-name">S3</div><div class="bar-sub">u SpajKK</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <p class="kicker">Zhlédnutí na Twitchi</p>
+        <div class="bar-wrap" style="margin-top:18px;">
+          <div class="bar-col"><div class="bar-val">25,6k</div><div class="bar-track"><div class="bar" style="height:64%"></div></div><div class="bar-name">S1</div></div>
+          <div class="bar-col"><div class="bar-val">36,2k</div><div class="bar-track"><div class="bar" style="height:91%"></div></div><div class="bar-name">S2</div></div>
+          <div class="bar-col"><div class="bar-val">40k</div><div class="bar-track"><div class="bar" style="height:100%"></div></div><div class="bar-name">S3</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-top:14px;">
+      <div class="card"><div class="stat" style="font-size:34px;">+60 %</div><div class="stat-label">Avg. diváci S1 → S3</div></div>
+      <div class="card"><div class="stat" style="font-size:34px;">101,8k</div><div class="stat-label">Zhlédnutí Twitch za 3 sezóny</div></div>
+      <div class="card">
+        <div class="stat" style="font-size:34px;">KICK</div>
+        <div class="stat-label">S4 na vlastním kanálu · podmínky spolupráce se ladí</div>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:12px; font-size:13px;">Sezóna 4 se přesouvá na Kick, aby byl oficiální přenos pod značkou turnaje. Konkrétní URL kanálu zveřejníme po uzavření spolupráce.</p>
+    <div class="foot"><span>Zdroj: Twitch analytics organizátora / streamera</span><span>05 / 10</span></div>
+  </section>
+
+  <!-- 6 SOCIAL -->
+  <section class="slide">
+    <p class="kicker">Dosah · sociální sítě</p>
+    <h2 style="font-size:46px; margin-top:6px;">Turnajový účet + kolaborace na hlavní EsportAreně</h2>
+    <div class="grid-2" style="margin-top:14px;">
+      <div class="card">
+        <p class="kicker">@esportarenacz · hlavní kanál</p>
+        <p style="font-family:'Bebas Neue'; font-size:64px; color:var(--green); margin-top:8px; line-height:.85;">10 900</p>
+        <p class="muted" style="margin-top:8px; font-size:14px;">sledujících na Instagramu organizátora. Důležité posty turnaje jdou jako kolaborace sem — dosah celé arény, ne jen ligového profilu.</p>
+        <div class="grid-2" style="margin-top:14px;">
+          <div style="border:1px solid var(--line); border-radius:12px; padding:12px;">
+            <div class="stat" style="font-size:30px;">240k</div>
+            <div class="stat-label">Nejsilnější reel</div>
+          </div>
+          <div style="border:1px solid var(--line); border-radius:12px; padding:12px;">
+            <div class="stat" style="font-size:30px;">~55k</div>
+            <div class="stat-label">Průměr reels z aktuálního gridu</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <p class="kicker">@esportarena_tsv · turnaj</p>
+        <p style="font-family:'Bebas Neue'; font-size:64px; color:var(--green); margin-top:8px; line-height:.85;">1 020</p>
+        <p class="muted" style="margin-top:8px; font-size:14px;">sledujících čistě na turnajovém účtu — kapitáni, hráči, školy.</p>
+        <ul class="clean" style="margin-top:10px;">
+          <li><span class="dot"></span>Klíčové novinky jdou jako collab na @esportarenacz</li>
+          <li><span class="dot"></span>Další top reels hlavní sítě: 208k · 117k · 100k</li>
+          <li><span class="dot"></span>Stejný obsah posíláme i na Discord a web</li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot"><span>Instagram @esportarenacz a @esportarena_tsv · stav k přípravě S4</span><span>06 / 10</span></div>
+  </section>
+
+  <!-- 7 SEZÓNA 4 -->
+  <section class="slide">
+    <p class="kicker">Sezóna 4</p>
+    <h2 style="font-size:48px; margin-top:6px;">Teď se liga posouvá o patro výš.</h2>
+    <div class="grid-3" style="margin-top:16px;">
+      <div class="card">
+        <p class="kicker">Kalendář</p>
+        <p style="margin-top:12px; font-size:15px; line-height:1.55;"><strong>Registrace od 1. 9. 2026.</strong><br />Start sezóny <span style="color:var(--green);">1. 1. 2027</span>. Termíny kvalifikací a LAN oznámíme v průběhu registrace.</p>
+      </div>
+      <div class="card">
+        <p class="kicker">Platforma</p>
+        <p style="margin-top:12px; font-size:15px; line-height:1.55;"><strong>Oficiální spolupráce s Faceit.</strong> Celý turnaj se odehraje na jejich platformě — férový anti-cheat, přehledné zápasy, důvěryhodný rámec pro školy i partnery.</p>
+      </div>
+      <div class="card">
+        <p class="kicker">Vysílání</p>
+        <p style="margin-top:12px; font-size:15px; line-height:1.55;"><strong>Vlastní Kick kanál.</strong> Po třech sezónách na Twitchi stavíme oficiální přenos pod značkou TSV. S Kickem ladíme podmínky spolupráce.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <p class="kicker">Proč je S4 jiná než předchozí ročníky</p>
+      <div class="grid-2" style="margin-top:12px;">
+        <ul class="clean">
+          <li><span class="dot"></span>Z jedné školy může startovat více týmů</li>
+          <li><span class="dot"></span>Otevření pro ZŠ, SŠ, VOŠ i VŠ v Česku i na Slovensku</li>
+          <li><span class="dot"></span>Dvě hlavní hry najednou: CS2 a League of Legends</li>
+          <li><span class="dot"></span>Cíl 500 startů / 2 500 hráčů</li>
+        </ul>
+        <ul class="clean">
+          <li><span class="dot"></span>LAN v Esport Areně — reálné bannery, reálné kamery</li>
+          <li><span class="dot"></span>Komunikace přes web, Discord a Instagram, ne přes chaos skupin</li>
+          <li><span class="dot"></span>Dokumentovaná registrace studentů = čistá značka pro partnera</li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot"><span>studentskyturnaj.cz</span><span>07 / 10</span></div>
+  </section>
+
+  <!-- 8 ARÉNA -->
+  <section class="slide">
+    <p class="kicker">LAN · EsportArena Plzeň</p>
+    <h2 style="font-size:46px; margin-top:6px;">Semifinále, finále a zápas o 3. místo v reálné aréně</h2>
+    <p class="muted" style="margin-top:6px; font-size:14px;">Bannery partnerů visí tady — stage, hráčské stanice, VIP tribuna. Kamery berou prostor, ne stock fotku.</p>
+    <div class="photos">
+      <img src="fotky/arena-1.jpg" alt="Herní plocha EsportAreny" />
+      <img src="fotky/arena-2.jpg" alt="Stage a branding arény" />
+      <img src="fotky/arena-3.jpg" alt="VIP Respawn a stanice" />
+      <img src="fotky/arena-4.jpg" alt="Setup hráče v aréně" />
+    </div>
+    <div class="foot"><span>EsportArena Plzeň · oficiální venue LAN finále</span><span>08 / 10</span></div>
+  </section>
+
+  <!-- 9 NABÍDKA -->
+  <section class="slide">
+    <p class="kicker">Partnerství</p>
+    <h2 style="font-size:48px; margin-top:6px;">Co partner v Sezóně 4 dostane</h2>
+    <div class="grid-3" style="margin-top:18px;">
+      <div class="card">
+        <p class="kicker">01 · Stream</p>
+        <p style="margin-top:12px; font-size:28px; font-family:'Bebas Neue';">Logo na streamu</p>
+        <p class="muted" style="margin-top:8px; font-size:14px; line-height:1.5;">Značka je vidět v oficiálním přenosu kvalifikací i LAN. Overlay, který sledují hráči, školy i fanoušci.</p>
+      </div>
+      <div class="card">
+        <p class="kicker">02 · Aréna</p>
+        <p style="margin-top:12px; font-size:28px; font-family:'Bebas Neue';">Bannery na LAN</p>
+        <p class="muted" style="margin-top:8px; font-size:14px; line-height:1.5;">Pokud dodáte bannery, vystavíme je v aréně při semifinále, finále a zápase o 3. místo. Kamery i fotky z eventů.</p>
+      </div>
+      <div class="card">
+        <p class="kicker">03 · Social</p>
+        <p style="margin-top:12px; font-size:28px; font-family:'Bebas Neue';">Zmínky na sítích</p>
+        <p class="muted" style="margin-top:8px; font-size:14px; line-height:1.5;">Partner je zmíněný na Instagramu turnaje a v kolaboracích na hlavní síti @esportarenacz. Ne schovaný v patičce, ale jako součást sezóny.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <p class="kicker">Partneři, kteří už jsou vidět</p>
+      <div class="logo-row" style="margin-top:12px;">
+        <div class="partner-chip dark">
+          <img class="logo" src="loga/esportarena.png" alt="EsportArena" />
+          <span class="partner-name">EsportArena</span>
+        </div>
+        <div class="partner-chip dark">
+          <img class="logo mark" src="loga/cougar.png" alt="Cougar" />
+          <span class="partner-name">Cougar</span>
+        </div>
+        <div class="partner-chip dark">
+          <img class="logo" src="loga/xpboost.png" alt="XP Boost" />
+          <span class="partner-name">XP Boost</span>
+        </div>
+        <div class="partner-chip">
+          <img class="logo" src="loga/gamepc.png" alt="GamePC" />
+          <span class="partner-name">GamePC</span>
+        </div>
+      </div>
+      <p style="margin-top:12px; font-size:14px; line-height:1.5;" class="muted">
+        Hardware, periférie, nápoje, telco, vzdělávání, IT, gaming retail.
+        Partner nevstupuje do náhodné akce — vstupuje do ligy, která má čtvrtou sezónu. Vaše logo bude stejně vidět.
+      </p>
+    </div>
+    <div class="foot"><span>Rozsah aktivací lze rozšířit individuálně</span><span>09 / 10</span></div>
+  </section>
+
+  <!-- 9 KONTAKT -->
+  <section class="slide">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <p class="kicker">Pojďme do Sezóny 4</p>
+        <h2 style="font-size:58px; margin-top:8px; line-height:.9;">Vaše značka<br />mezi školami,<br /><span style="color:var(--green);">které hrají naplno.</span></h2>
+      </div>
+      <img class="logo" src="loga/tsv.png" alt="TSV" style="height:110px;" />
+    </div>
+    <div class="grid-2" style="margin-top:22px;">
+      <div class="card">
+        <p class="kicker">Hlavní organizátor</p>
+        <p style="font-family:'Bebas Neue'; font-size:42px; margin-top:10px;">Jiří Vrba</p>
+        <p style="margin-top:10px; font-size:18px;"><a href="mailto:jiri@esportarena.cz" style="color:var(--green); text-decoration:none;">jiri@esportarena.cz</a></p>
+        <p style="margin-top:6px; font-size:18px;"><a href="tel:+420606020284" style="color:#fff; text-decoration:none;">+420 606 020 284</a></p>
+        <p class="muted" style="margin-top:14px; font-size:13px;">Rád pošlu follow-up, media kit nebo navrhnu konkrétní balíček podle rozpočtu.</p>
+      </div>
+      <div class="card">
+        <p class="kicker">Rychlé shrnutí</p>
+        <ul class="clean">
+          <li><span class="dot"></span>Registrace 1. 9. 2026 · start 1. 1. 2027</li>
+          <li><span class="dot"></span>S3: 150 škol · 750 hráčů · 200 startů</li>
+          <li><span class="dot"></span>S4 cíl: 500 startů · 2 500 hráčů · více týmů ze školy</li>
+          <li><span class="dot"></span>Twitch S3: 400 avg. · 40 tis. zhlédnutí</li>
+          <li><span class="dot"></span>@esportarenacz 10,9 tis. · reels až 240 tis.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <p class="muted" style="font-size:13px; margin-bottom:12px;">studentskyturnaj.cz · @esportarena_tsv · @esportarenacz · EsportArena Plzeň</p>
+      <div class="logo-row">
+        <div class="partner-chip dark">
+          <img class="logo" src="loga/esportarena.png" alt="EsportArena" />
+          <span class="partner-name">EsportArena</span>
+        </div>
+        <div class="partner-chip dark">
+          <img class="logo mark" src="loga/cougar.png" alt="Cougar" />
+          <span class="partner-name">Cougar</span>
+        </div>
+        <div class="partner-chip dark">
+          <img class="logo" src="loga/xpboost.png" alt="XP Boost" />
+          <span class="partner-name">XP Boost</span>
+        </div>
+        <div class="partner-chip">
+          <img class="logo" src="loga/gamepc.png" alt="GamePC" />
+          <span class="partner-name">GamePC</span>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span>Děkujeme za pozornost</span><span>10 / 10</span></div>
+  </section>
+
+</body>
+</html>

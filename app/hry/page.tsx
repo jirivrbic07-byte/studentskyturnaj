@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GamesCatalog } from "@/components/games-catalog";
-import { TOURNAMENT_SCHOOLS_TYPES } from "@/lib/site-info";
 import { pageMetadata } from "@/lib/site-seo";
+import { getSimplePageContent } from "@/lib/get-cms-page";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = pageMetadata({
   title: "Hry",
@@ -11,19 +13,14 @@ export const metadata: Metadata = pageMetadata({
   path: "/hry",
 });
 
-export default function HryPage() {
+export default async function HryPage() {
+  const cms = await getSimplePageContent("hry");
   return (
     <main className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
       <h1 className="font-[family-name:var(--font-bebas)] text-4xl tracking-wide text-white sm:text-5xl">
-        Herní disciplíny
+        {cms.title}
       </h1>
-      <p className="mt-3 max-w-2xl text-slate-400">
-        V rámci ligy ESPORTARENA TSV soutěží studentské týmy ze škol ({TOURNAMENT_SCHOOLS_TYPES})
-        ve čtyřech titulech. Sezóna 4
-        je aktivní pro <strong className="text-white">Counter-Strike 2</strong> a{" "}
-        <strong className="text-white">League of Legends</strong>; ostatní hry připravujeme
-        na další fázi.
-      </p>
+      <p className="mt-3 max-w-2xl text-slate-400 whitespace-pre-line">{cms.intro}</p>
 
       <GamesCatalog />
 

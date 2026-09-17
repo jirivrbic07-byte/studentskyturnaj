@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { verifyAdminBearer } from "@/lib/server-auth";
-import type { CmsSlug } from "@/lib/cms-defaults";
+import { CMS_PAGE_META, isCmsSlug } from "@/lib/cms-defaults";
 import { upsertDocRest } from "@/lib/firebase/firestore-rest-admin";
 import { reportSiteAction } from "@/lib/discord-webhook";
-
-const SLUGS: CmsSlug[] = ["home", "pravidla", "oznameni"];
 
 export async function PUT(request: Request) {
   const auth = await verifyAdminBearer(request);
@@ -23,12 +22,14 @@ export async function PUT(request: Request) {
   }
 
   const slug = body.slug;
-  if (typeof slug !== "string" || !SLUGS.includes(slug as CmsSlug)) {
+  if (typeof slug !== "string" || !isCmsSlug(slug)) {
     return NextResponse.json({ ok: false, error: "Neplatný slug." }, { status: 400 });
   }
 
   const { slug: _s, ...patch } = body;
   await upsertDocRest(`page_content/${slug}`, patch);
+  revalidatePath(CMS_PAGE_META[slug].href);
+  revalidatePath("/", "layout");
 
   void reportSiteAction({
     content: "**CMS** · uložení stránky",

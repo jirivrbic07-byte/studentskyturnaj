@@ -4,29 +4,28 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useAdminTempBypass } from "@/contexts/admin-temp-context";
-import { isClientAdminEmail } from "@/lib/admin-client";
 import { PortalHubGrid } from "@/components/portal-hub-grid";
-import { ADMIN_HUB_SECTIONS } from "@/lib/portal-hub";
+import { ADMIN_HUB_SECTIONS, filterAdminHub } from "@/lib/portal-hub";
 import { GlassCard } from "@/components/glass-card";
 import { GlowButton } from "@/components/glow-button";
 
 export default function AdminHubPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, access } = useAuth();
   const tempBypass = useAdminTempBypass();
   const router = useRouter();
   const [lfgSeedMsg, setLfgSeedMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || access.loading) return;
     if (tempBypass) return;
     if (!user) {
       router.replace("/prihlaseni");
       return;
     }
-    if (!isClientAdminEmail(user.email)) {
+    if (!access.isAdmin) {
       router.replace("/zakazano");
     }
-  }, [user, loading, router, tempBypass]);
+  }, [user, loading, access.loading, access.isAdmin, router, tempBypass]);
 
   async function seedLfgDemos() {
     if (!user) return;
@@ -48,7 +47,7 @@ export default function AdminHubPage() {
     }
   }
 
-  if (loading) {
+  if (loading || access.loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-slate-500">
         Načítání…
@@ -56,7 +55,7 @@ export default function AdminHubPage() {
     );
   }
 
-  if (!tempBypass && (!user || !isClientAdminEmail(user.email))) {
+  if (!tempBypass && (!user || !access.isAdmin)) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-slate-500">
         Načítání…
@@ -75,7 +74,7 @@ export default function AdminHubPage() {
       </p>
 
       <div className="mt-10">
-        <PortalHubGrid items={ADMIN_HUB_SECTIONS} />
+        <PortalHubGrid items={filterAdminHub(ADMIN_HUB_SECTIONS, access)} />
       </div>
 
       <GlassCard className="mt-10">

@@ -5,6 +5,9 @@ import {
   formatTournamentStartsAt,
   isTournamentActive,
 } from "@/lib/tournament-list";
+import { publicSeasonMatchStartsAtMs, SEASON_DATE_TBA_LABEL } from "@/lib/seasons";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
@@ -15,7 +18,7 @@ export async function GET() {
         gameId: t.gameId || "cs2",
         prizePoolText: t.prizePoolText,
         createdAtMs: t.createdAtMs ?? 0,
-        startsAtMs: t.startsAtMs ?? null,
+        startsAtMs: publicSeasonMatchStartsAtMs(t.seasonId, t.startsAtMs ?? null, t.name),
       }))
       .sort((a, b) => b.createdAtMs - a.createdAtMs)
       .slice(0, 100)
@@ -26,7 +29,9 @@ export async function GET() {
         prizePoolText: displayPrizePoolText(t.prizePoolText),
         startsAtMs: t.startsAtMs,
         isActive: isTournamentActive(t.startsAtMs),
-        startsAtLabel: formatTournamentStartsAt(t.startsAtMs),
+        startsAtLabel:
+          formatTournamentStartsAt(t.startsAtMs) ??
+          (t.startsAtMs == null ? SEASON_DATE_TBA_LABEL : null),
       }));
 
     return NextResponse.json({ ok: true, tournaments });

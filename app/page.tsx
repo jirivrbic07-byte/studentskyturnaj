@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import { Hero } from "@/components/home/hero";
 import { HomeAboutSection } from "@/components/home/home-about-section";
 import { HomeTournamentsSection } from "@/components/home/home-tournaments-section";
@@ -12,6 +12,8 @@ import {
   pageMetadata,
 } from "@/lib/site-seo";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = pageMetadata({
   title: SITE_DEFAULT_TITLE,
   description: SITE_DEFAULT_DESCRIPTION,
@@ -22,37 +24,37 @@ const heroVideoUrl = process.env.NEXT_PUBLIC_HERO_VIDEO_URL?.trim() || "";
 const heroVideoIsLocalMp4 =
   heroVideoUrl.length > 0 && !/youtu(\.be|be\.com)/i.test(heroVideoUrl);
 
-const HomeRegistrationCountdown = dynamic(() =>
+const HomeRegistrationCountdown = nextDynamic(() =>
   import("@/components/home/home-registration-countdown").then((m) => ({
     default: m.HomeRegistrationCountdown,
   }))
 );
 
-const HomeTournamentRoadmap = dynamic(() =>
+const HomeTournamentRoadmap = nextDynamic(() =>
   import("@/components/home/home-tournament-roadmap").then((m) => ({
     default: m.HomeTournamentRoadmap,
   }))
 );
 
-const HomePrizePool = dynamic(() =>
+const HomePrizePool = nextDynamic(() =>
   import("@/components/home/home-prize-pool").then((m) => ({
     default: m.HomePrizePool,
   }))
 );
 
-const HomePhotoGallery = dynamic(() =>
+const HomePhotoGallery = nextDynamic(() =>
   import("@/components/home/home-photo-gallery").then((m) => ({
     default: m.HomePhotoGallery,
   }))
 );
 
-const HallOfFame = dynamic(() =>
+const HallOfFame = nextDynamic(() =>
   import("@/components/home/hall-of-fame").then((m) => ({
     default: m.HallOfFame,
   }))
 );
 
-const HomePartners = dynamic(() =>
+const HomePartners = nextDynamic(() =>
   import("@/components/home/home-partners").then((m) => ({
     default: m.HomePartners,
   }))

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useAdminTempBypass } from "@/contexts/admin-temp-context";
-import { isClientAdminEmail } from "@/lib/admin-client";
 import { gameLabel, type GameId } from "@/lib/games";
 import { PortalPageHeader } from "@/components/portal-page-header";
 import { GlassCard } from "@/components/glass-card";
@@ -42,8 +41,13 @@ function QualResultPicker({
   getToken: () => Promise<string>;
   onSaved: () => void;
 }) {
-  const [regs, setRegs] = useState<RegRow[]>([]);
-  const [placements, setPlacements] = useState<Record<string, number>>({});
+  const [teams, setTeams] = useState<RegRow[]>([]);
+  const [places, setPlaces] = useState<Record<number, string>>({
+    1: "",
+    2: "",
+    3: "",
+    4: "",
+  });
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -59,13 +63,22 @@ function QualResultPicker({
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const j = (await res.json()) as {
+          teams?: RegRow[];
           registrations?: RegRow[];
+          placements?: { placement: number; teamId: string }[];
           error?: string;
         };
-        if (!res.ok) throw new Error(j.error ?? "Nelze načíst přihlášené");
-        if (!cancelled) setRegs(j.registrations ?? []);
+        if (!res.ok) throw new Error(j.error ?? "Nelze načíst týmy");
+        if (cancelled) return;
+        const list = (j.teams?.length ? j.teams : j.registrations) ?? [];
+        setTeams(list);
+        const next: Record<number, string> = { 1: "", 2: "", 3: "", 4: "" };
+        for (const p of j.placements ?? []) {
+          if (p.placement >= 1 && p.placement <= 4) next[p.placement] = p.teamId;
+        }
+        setPlaces(next);
       } catch {
-        if (!cancelled) setRegs([]);
+        if (!cancelled) setTeams([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -75,25 +88,22 @@ function QualResultPicker({
     };
   }, [tournament.id, getToken]);
 
-  function setPlacement(teamId: string, placement: number) {
-    setPlacements((prev) => {
+  function setPlace(placement: number, teamId: string) {
+    setPlaces((prev) => {
       const next = { ...prev };
-      for (const [id, p] of Object.entries(next)) {
-        if (p === placement && id !== teamId) delete next[id];
+      for (const n of [1, 2, 3, 4]) {
+        if (n !== placement && next[n] === teamId) next[n] = "";
       }
-      next[teamId] = placement;
+      next[placement] = teamId;
       return next;
     });
   }
 
-  async function save(autoBracket: boolean) {
-    const advances = Object.entries(placements)
-      .filter(([, p]) => p >= 1 && p <= 4)
-      .map(([teamId, placement]) => ({ teamId, placement }));
-    if (advances.length === 0) {
-      setMsg("Vyber alespoň jeden tým s umístěním 1–4.");
-      return;
-    }
+  async function save() {
+    const advances = [1, 2, 3, 4].map((placement) => ({
+      placement,
+      teamId: places[placement] ?? "",
+    }));
     setBusy(true);
     setMsg(null);
     try {
@@ -109,7 +119,7 @@ function QualResultPicker({
           body: JSON.stringify({
             tournamentId: tournament.id,
             advances,
-            autoBracket,
+            autoBracket: true,
             gameId: tournament.gameId,
           }),
         }
@@ -119,11 +129,7 @@ function QualResultPicker({
         setMsg(j.error ?? "Uložení selhalo.");
         return;
       }
-      setMsg(
-        `Uloženo ${j.saved?.length ?? advances.length} postupujících.${
-          autoBracket ? " Pavouk doplněn." : ""
-        }`
-      );
+      setMsg(`Uloženo ${j.saved?.length ?? 0} umístění a doplněno do pavouka.`);
       onSaved();
     } finally {
       setBusy(false);
@@ -131,66 +137,49 @@ function QualResultPicker({
   }
 
   if (loading) {
-    return <p className="text-sm text-slate-500">Načítám přihlášené týmy…</p>;
-  }
-
-  if (regs.length === 0) {
-    return (
-      <p className="text-sm text-slate-500">
-        Do této kvalifikace se zatím nikdo nepřihlásil.
-      </p>
-    );
+    return <p className="text-sm text-slate-500">Načítám týmy…</p>;
   }
 
   return (
     <div className="mt-3 space-y-2">
       <ul className="space-y-2">
-        {regs.map((r) => (
+        {[1, 2, 3, 4].map((n) => (
           <li
-            key={r.teamId}
+            key={n}
             className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm"
           >
-            <span>
-              <strong className="text-white">{r.teamName}</strong>
-              <span className="text-slate-500"> · {r.schoolName}</span>
-            </span>
+            <span className="font-semibold text-white">{n}. místo</span>
             <select
-              value={placements[r.teamId] ?? ""}
-              onChange={(e) =>
-                setPlacement(r.teamId, e.target.value ? Number(e.target.value) : 0)
-              }
-              className="rounded border border-white/10 bg-black/50 px-2 py-1 text-sm text-white"
+              value={places[n] ?? ""}
+              onChange={(e) => setPlace(n, e.target.value)}
+              className="min-w-[240px] flex-1 rounded border border-white/10 bg-black/50 px-2 py-1 text-sm text-white"
             >
-              <option value="">—</option>
-              {[1, 2, 3, 4].map((n) => (
-                <option key={n} value={n}>
-                  #{n}
+              <option value="">— vyber tým —</option>
+              {teams.map((t) => (
+                <option key={t.teamId} value={t.teamId}>
+                  {t.teamName}
+                  {t.schoolName ? ` · ${t.schoolName}` : ""}
                 </option>
               ))}
             </select>
           </li>
         ))}
       </ul>
+      {teams.length === 0 ? (
+        <p className="text-sm text-slate-500">
+          Zatím tu nejsou schválené týmy v této hře. Až budou, objeví se v nabídce.
+        </p>
+      ) : null}
       {msg ? <p className="text-sm text-slate-400">{msg}</p> : null}
-      <div className="flex flex-wrap gap-2">
-        <GlowButton type="button" disabled={busy} onClick={() => void save(false)}>
-          Uložit postupující
-        </GlowButton>
-        <GlowButton
-          type="button"
-          variant="ghost"
-          disabled={busy}
-          onClick={() => void save(true)}
-        >
-          Uložit a doplnit pavouk
-        </GlowButton>
-      </div>
+      <GlowButton type="button" disabled={busy} onClick={() => void save()}>
+        {busy ? "Ukládám…" : "Uložit do pavouka"}
+      </GlowButton>
     </div>
   );
 }
 
 export default function AdminSezonyPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, access } = useAuth();
   const tempBypass = useAdminTempBypass();
   const router = useRouter();
   const [season, setSeason] = useState<SeasonDocument | null>(null);
@@ -252,7 +241,7 @@ export default function AdminSezonyPage() {
   }, [user, tempBypass, tab, reload]);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || access.loading) return;
     if (tempBypass) {
       void load();
       return;
@@ -261,12 +250,12 @@ export default function AdminSezonyPage() {
       router.replace("/prihlaseni");
       return;
     }
-    if (!isClientAdminEmail(user.email)) {
+    if (!access.isAdmin) {
       router.replace("/zakazano");
       return;
     }
     void load();
-  }, [user, loading, load, router, tempBypass]);
+  }, [user, loading, access.loading, access.isAdmin, load, router, tempBypass]);
 
   const displayBracket = season
     ? resolveSeasonBracketForDisplay({
@@ -346,8 +335,9 @@ export default function AdminSezonyPage() {
           {season?.label ?? "Sezóna 4"}
         </h2>
         <p className="mt-2 text-sm text-slate-500">
-          Jednorázová inicializace vytvoří 8 kvalifikačních turnajů (CS2 + LoL × 4) s
-          režimem „jen týmy v sezóně“ a prázdné pavouky.
+          Inicializace založí chybějící kvalifikační turnaje (CS2 + LoL × 4) a prázdné
+          pavouky, pokud ještě neexistují. Opakované spuštění už hotové turnaje ani
+          vyplněný pavouk nepřepíše.
         </p>
         {seedMsg ? <p className="mt-3 text-sm text-[#39FF14]">{seedMsg}</p> : null}
         <GlowButton
@@ -382,8 +372,8 @@ export default function AdminSezonyPage() {
           Kvalifikace · {gameLabel(tab)}
         </h2>
         <p className="mt-2 text-sm text-slate-500">
-          Po skončení kvalifikace vyber top 4 podle umístění. „Doplnit pavouk“ nasadí týmy
-          do osmifinále podle schématu A–D (zápasy 1–8).
+          U každé kvalifikace vyber 1. až 4. místo z nabídky týmů. Uložením se týmy
+          hned zapíšou do pavouka podle schématu A–D.
         </p>
         {qualTournaments.length === 0 ? (
           <p className="mt-4 text-sm text-slate-500">

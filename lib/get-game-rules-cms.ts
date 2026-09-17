@@ -1,11 +1,8 @@
-import {
-  CMS_DEFAULTS,
-  type PravidlaCms,
-  type RuleSection,
-} from "@/lib/cms-defaults";
+import { type PravidlaCms, type RuleSection } from "@/lib/cms-defaults";
 import { GAME_RULES_DEFAULTS } from "@/lib/game-rules-defaults";
 import { getPageContent } from "@/lib/get-cms-page";
 import type { GameId } from "@/lib/games";
+import { unstable_noStore as noStore } from "next/cache";
 
 function mergeSections(base: PravidlaCms, remote?: Record<string, unknown>): PravidlaCms {
   const sections = remote?.sections as RuleSection[] | undefined;
@@ -19,17 +16,8 @@ function mergeSections(base: PravidlaCms, remote?: Record<string, unknown>): Pra
  * Ostatní hry: výchozí text + volitelný přepis ve `page_content/pravidla_<gameId>`.
  */
 export async function getGameRulesCms(gameId: GameId): Promise<PravidlaCms> {
+  noStore();
   const fallback = GAME_RULES_DEFAULTS[gameId];
-
-  if (
-    process.env.NODE_ENV !== "production" &&
-    process.env.USE_REMOTE_CMS_IN_DEV !== "1"
-  ) {
-    if (gameId === "cs2") {
-      return CMS_DEFAULTS.pravidla as PravidlaCms;
-    }
-    return fallback;
-  }
 
   if (gameId === "cs2") {
     return (await getPageContent("pravidla")) as PravidlaCms;

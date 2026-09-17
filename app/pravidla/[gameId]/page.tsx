@@ -10,6 +10,8 @@ import { isSeasonActiveGame } from "@/lib/season-games";
 
 type Props = { params: Promise<{ gameId: string }> };
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const { gameId: raw } = await props.params;
   const gameId = parseGameId(raw);

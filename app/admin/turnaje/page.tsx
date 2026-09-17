@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { PortalPageHeader } from "@/components/portal-page-header";
 import { useAdminTempBypass } from "@/contexts/admin-temp-context";
-import { isClientAdminEmail } from "@/lib/admin-client";
 import { GAMES, type GameId } from "@/lib/games";
 import {
   parseTournamentPhase,
@@ -582,7 +581,7 @@ const emptyRow = (): Row => ({
 });
 
 export default function AdminTurnajePage() {
-  const { user, loading } = useAuth();
+  const { user, loading, access } = useAuth();
   const tempBypass = useAdminTempBypass();
   const router = useRouter();
   const [rows, setRows] = useState<Row[]>([]);
@@ -645,7 +644,7 @@ export default function AdminTurnajePage() {
   }, [user, router, tempBypass]);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || access.loading) return;
     if (tempBypass) {
       void load();
       return;
@@ -654,14 +653,14 @@ export default function AdminTurnajePage() {
       router.replace("/prihlaseni");
       return;
     }
-    if (!isClientAdminEmail(user.email)) {
+    if (!access.isAdmin) {
       router.replace("/zakazano");
       return;
     }
     void load();
-  }, [user, loading, load, router, loadTick, tempBypass]);
+  }, [user, loading, access.loading, access.isAdmin, load, router, loadTick, tempBypass]);
 
-  if (loading) {
+  if (loading || access.loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-slate-500">
         Načítání…
@@ -669,7 +668,7 @@ export default function AdminTurnajePage() {
     );
   }
 
-  if (!tempBypass && (!user || !isClientAdminEmail(user.email))) {
+  if (!tempBypass && (!user || !access.isAdmin)) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-slate-500">
         Načítání…
@@ -677,7 +676,7 @@ export default function AdminTurnajePage() {
     );
   }
 
-  const canUseApi = Boolean(user && isClientAdminEmail(user.email));
+  const canUseApi = Boolean(user && access.isAdmin);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 md:py-12">

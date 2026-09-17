@@ -4,25 +4,25 @@ import Link from "next/link";
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
-import { isClientAdminEmail } from "@/lib/admin-client";
 
-/** Ochrana CMS stránek bez Edge middleware (stačí Firebase + admin e-mail). */
+/** Ochrana CMS stránek bez Edge middleware (stačí Firebase + admin oprávnění cms). */
 export function CmsEditGuard({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, access, hasAdminPermission } = useAuth();
   const router = useRouter();
+  const allowed = Boolean(user && access.isAdmin && hasAdminPermission("cms"));
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || access.loading) return;
     if (!user) {
       router.replace("/prihlaseni");
       return;
     }
-    if (!isClientAdminEmail(user.email)) {
+    if (!allowed) {
       router.replace("/zakazano");
     }
-  }, [loading, user, router]);
+  }, [loading, access.loading, user, allowed, router]);
 
-  if (loading || !user || !isClientAdminEmail(user.email)) {
+  if (loading || access.loading || !user || !allowed) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-slate-500">
         Ověřování přístupu…

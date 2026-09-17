@@ -4,6 +4,9 @@ import { GlassCard } from "@/components/glass-card";
 import { SITE_CONTACT } from "@/lib/site-info";
 import { SITE_COPY } from "@/lib/site-copy";
 import { pageMetadata } from "@/lib/site-seo";
+import { getSimplePageContent } from "@/lib/get-cms-page";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = pageMetadata({
   title: "Kontakt",
@@ -11,15 +14,15 @@ export const metadata: Metadata = pageMetadata({
   path: "/kontakt",
 });
 
-export default function KontaktPage() {
+export default async function KontaktPage() {
+  const cms = await getSimplePageContent("kontakt");
   return (
     <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <h1 className="font-[family-name:var(--font-bebas)] text-4xl tracking-wide text-white sm:text-5xl">
-        Kontakt
+        {cms.title}
       </h1>
-      <p className="mt-3 text-slate-400">
-        Máš dotaz k registraci, turnaji nebo spolupráci? Ozvi se přímo organizátorům. Pro
-        časté dotazy použij také{" "}
+      <p className="mt-3 text-slate-400 whitespace-pre-line">
+        {cms.intro}{" "}
         <Link href="/podpora" className="text-[#39FF14] underline-offset-2 hover:underline">
           Centrum podpory
         </Link>

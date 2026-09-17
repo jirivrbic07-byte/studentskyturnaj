@@ -19,10 +19,15 @@ function RegistraceTymuInner() {
   const gameId = parseGameId(searchParams.get("hra"));
 
   useEffect(() => {
-    if (!loading && user && !gameId) {
+    if (loading) return;
+    if (user && profile?.accountRole === "player") {
+      router.replace("/dashboard/tymy");
+      return;
+    }
+    if (user && !gameId) {
       router.replace("/dashboard/tymy");
     }
-  }, [loading, user, gameId, router]);
+  }, [loading, user, gameId, router, profile?.accountRole]);
 
   if (loading || !user) {
     return (
@@ -86,8 +91,7 @@ function RegistraceTymuInner() {
       <p className="mt-3 text-sm text-slate-400">
         Přesně <strong className="text-white">4 hráči</strong>, až{" "}
         <strong className="text-white">2 náhradníci</strong> a{" "}
-        <strong className="text-white">1 trenér</strong>. Nahrané doklady se mažou
-        po 48 h — viz{" "}
+        <strong className="text-white">1 trenér</strong>.         Nahrané doklady se mažou 24 h po schválení týmu administrátorem — viz{" "}
         <Link href="/gdpr" className="text-[#39FF14] underline-offset-2 hover:underline">
           GDPR
         </Link>

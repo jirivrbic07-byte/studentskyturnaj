@@ -5,6 +5,7 @@ import { gameLabel, type GameId } from "@/lib/games";
 import { GlassCard } from "@/components/glass-card";
 import { displayPrizePoolText } from "@/lib/prize-pool";
 import { partitionTournamentsByActivity } from "@/lib/tournament-list";
+import { SEASON_DATE_TBA_LABEL } from "@/lib/seasons";
 
 export type TournamentListItem = {
   id: string;
@@ -48,7 +49,9 @@ function TournamentCard({
         <p className="mt-1 text-sm text-[#39FF14]">{gameLabel(row.gameId)}</p>
         {row.startsAtLabel ? (
           <p className="mt-2 text-sm text-slate-400">
-            {row.isActive ? "Start" : "Proběhlo"}: {row.startsAtLabel}
+            {row.startsAtLabel === SEASON_DATE_TBA_LABEL
+              ? `Termín: ${row.startsAtLabel}`
+              : `${row.isActive ? "Start" : "Proběhlo"}: ${row.startsAtLabel}`}
           </p>
         ) : null}
         <p className="mt-1 text-sm text-slate-500">

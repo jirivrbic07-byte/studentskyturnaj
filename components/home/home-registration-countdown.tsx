@@ -46,7 +46,8 @@ export function HomeRegistrationCountdown() {
           Cesta k <span className="text-[#39FF14]">registraci</span>
         </h2>
         <p className="mt-2 max-w-2xl text-sm text-slate-400">
-          Od začátku roku 2026 se postupně blížíme otevření registrace týmů do turnaje.
+          Registrace týmů je otevřená. Turnaj startuje 1. 1. 2027 — termíny kvalifikací
+          a zápasů budou upřesněny.
         </p>
 
         <div className="mt-8">

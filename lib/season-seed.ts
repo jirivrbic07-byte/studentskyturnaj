@@ -3,6 +3,7 @@ import { createTournamentRest } from "@/lib/firebase/firestore-rest-admin";
 import { createEmptyBracket } from "@/lib/season-bracket";
 import {
   ensureDefaultSeasonS4Rest,
+  getSeasonBracketRest,
   getSeasonRest,
   upsertSeasonBracketRest,
   upsertSeasonRest,
@@ -40,7 +41,7 @@ async function syncQualificationTournaments(
       gameId: discipline.gameId,
       phase: "qualification",
       backgroundImageUrl: "",
-      startsAt: q.startsAt,
+      startsAt: q.startsAt ?? "",
       prizePoolText: "",
       rulesText: `Kvalifikace Sezóny 4 — ${q.label}. Postupují první 4 týmy podle umístění.`,
       faceitUrl: "",
@@ -80,6 +81,8 @@ export async function seedSeason4Rest(): Promise<SeasonSeedResult> {
 
   const bracketsInitialized: string[] = [];
   for (const d of disciplines) {
+    const existing = await getSeasonBracketRest(S4_SEASON_ID, d.gameId);
+    if (existing) continue;
     const r16 = d.playoffs.find((p) => p.id === "r16")?.startsAt ?? null;
     const qf = d.playoffs.find((p) => p.id === "qf")?.startsAt ?? null;
     const lan = d.playoffs.find((p) => p.id === "lan")?.startsAt ?? null;

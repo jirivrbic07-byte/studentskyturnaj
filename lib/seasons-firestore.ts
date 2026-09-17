@@ -1,5 +1,6 @@
 import type { GameId } from "@/lib/games";
 import {
+  deleteDocRest,
   getDocRest,
   listCollectionDocsRest,
   upsertDocRest,
@@ -116,8 +117,18 @@ export async function upsertQualificationAdvancementRest(
   seasonId: string,
   row: QualificationAdvancement
 ): Promise<void> {
-  const docId = `${row.tournamentId}_${row.teamId}`;
+  const docId = `${row.tournamentId}_p${row.placement}`;
   await upsertDocRest(`${seasonPath(seasonId)}/qualificationAdvancements/${docId}`, row);
+}
+
+export async function deleteQualificationAdvancementRest(
+  seasonId: string,
+  tournamentId: string,
+  placement: number
+): Promise<void> {
+  await deleteDocRest(
+    `${seasonPath(seasonId)}/qualificationAdvancements/${tournamentId}_p${placement}`
+  );
 }
 
 export async function getSeasonBracketRest(

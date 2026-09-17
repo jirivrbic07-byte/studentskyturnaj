@@ -3,7 +3,10 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { GlowButton } from "@/components/glow-button";
 import { GlassCard } from "@/components/glass-card";
+import { getSimplePageContent } from "@/lib/get-cms-page";
 import { pageMetadata } from "@/lib/site-seo";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = pageMetadata({
   title: "Registrace týmu",
@@ -39,27 +42,19 @@ function Step({
   );
 }
 
-export default function TymRegistracePublicPage() {
+export default async function TymRegistracePublicPage() {
+  const cms = await getSimplePageContent("registrace-tym");
   return (
     <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <h1 className="font-[family-name:var(--font-bebas)] text-4xl tracking-wide text-white sm:text-5xl">
-        Registrace týmu
+        {cms.title}
       </h1>
-      <p className="mt-3 text-slate-400">
-        Turnaj je pro týmy ze{" "}
-        <strong className="text-white">
-          základních, středních, vyšších odborných a vysokých škol v Česku i na Slovensku
-        </strong>
-        . Týmový formulář vyplňuje jen <strong className="text-white">kapitán</strong> po
-        přihlášení — pro každou aktivní hru (Sezóna 4: CS2 a LoL) zvlášť, stejný postup
-        dokladů a soupisky. Tato stránka je pro celý tým — ať víte dopředu, co budete od
-        sebe navzájem potřebovat.
-      </p>
+      <p className="mt-3 text-slate-400 whitespace-pre-line">{cms.intro}</p>
 
       <div className="mt-8 flex flex-wrap gap-3">
-        <GlowButton href="/prihlaseni">Přihlásit se jako kapitán</GlowButton>
+        <GlowButton href="/prihlaseni">Přihlásit se</GlowButton>
         <GlowButton href="/registrace" variant="ghost">
-          Založit účet kapitána
+          Založit účet
         </GlowButton>
       </div>
       <p className="mt-4 text-xs text-slate-500">
@@ -140,8 +135,8 @@ export default function TymRegistracePublicPage() {
         </ul>
         <p className="mt-6 rounded-lg border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
           Nahrané citlivé soubory u týmu se{" "}
-          <strong className="text-white">automaticky mažou nejpozději po 48 hodinách</strong>{" "}
-          — jde čistě o ověření. Podrobnosti:{" "}
+          <strong className="text-white">automaticky smažou 24 hodin po schválení týmu</strong>{" "}
+          administrátorem — jde čistě o ověření. Podrobnosti:{" "}
           <Link href="/gdpr" className="text-[#39FF14] underline-offset-2 hover:underline">
             GDPR
           </Link>

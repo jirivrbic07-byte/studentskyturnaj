@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { GlowButton } from "@/components/glow-button";
-import { isClientAdminEmail } from "@/lib/admin-client";
 import { TOURNAMENT_BRAND_LOGO } from "@/lib/tournament-game-logos";
 
 /** Stejná výška / padding pro CTA v liště — primární i ghost */
@@ -26,9 +25,13 @@ const publicLinks = [
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
+  const { user, signOut, access } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const showAdmin = Boolean(user && isClientAdminEmail(user.email));
+  const portalKind = access.portalKind;
+  const showAdmin = Boolean(user && (access.isAdmin || portalKind === "admin"));
+  const portalHref = showAdmin ? "/admin" : "/dashboard";
+  const portalLabel =
+    portalKind === "admin" ? "Admin" : portalKind === "player" ? "Přehled hráče" : "Přehled kapitána";
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
@@ -83,17 +86,19 @@ export function SiteHeader() {
           {user ? (
             <>
               <Link
-                href={showAdmin ? "/admin" : "/dashboard"}
+                href={portalHref}
                 className="hidden text-sm font-medium text-[#39FF14] hover:underline sm:inline"
               >
-                Přehled
+                {portalLabel}
               </Link>
-              <Link
-                href="/dashboard/profil"
-                className="hidden text-sm text-slate-300 hover:text-white sm:inline"
-              >
-                Profil
-              </Link>
+              {!showAdmin ? (
+                <Link
+                  href="/dashboard/profil"
+                  className="hidden text-sm text-slate-300 hover:text-white sm:inline"
+                >
+                  {portalKind === "player" ? "Nastavení" : "Profil"}
+                </Link>
+              ) : null}
               <GlowButton
                 variant="ghost"
                 className={navCta}
@@ -111,7 +116,7 @@ export function SiteHeader() {
                 href="/registrace"
                 className={`hidden ${navCta} sm:inline-flex`}
               >
-                Registrace kapitána
+                Registrace
               </GlowButton>
             </>
           )}
@@ -171,11 +176,11 @@ export function SiteHeader() {
               })}
               {user ? (
                 <Link
-                  href={showAdmin ? "/admin" : "/dashboard"}
+                  href={portalHref}
                   onClick={closeMenu}
                   className="mt-2 rounded-md px-3 py-3 text-sm font-medium text-[#39FF14] hover:bg-white/5"
                 >
-                  Přehled
+                  {portalLabel}
                 </Link>
               ) : null}
               {!user ? (
@@ -184,7 +189,7 @@ export function SiteHeader() {
                   onClick={closeMenu}
                   className="mt-2 rounded-md px-3 py-3 text-sm font-medium text-[#39FF14] hover:bg-white/5"
                 >
-                  Registrace kapitána
+                  Registrace
                 </Link>
               ) : null}
             </nav>

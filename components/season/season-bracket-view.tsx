@@ -86,7 +86,9 @@ function MatchCard({ match, index }: { match: BracketMatch; index: number }) {
         <p className="mt-1 text-[11px] text-[#39FF14]/80">
           {formatSeasonDateTime(match.scheduledAt)}
         </p>
-      ) : null}
+      ) : (
+        <p className="mt-1 text-[11px] text-slate-500">Termín bude upřesněn</p>
+      )}
 
       <div className="mt-3 space-y-2">
         <div
@@ -331,7 +333,9 @@ export function SeasonQualCards({
                 <h3 className="mt-1 font-[family-name:var(--font-bebas)] text-xl text-white group-hover:text-[#39FF14]">
                   {t.name}
                 </h3>
-                {date ? <p className="mt-1 text-sm text-slate-400">{date}</p> : null}
+                {date ? <p className="mt-1 text-sm text-slate-400">{date}</p> : (
+                  <p className="mt-1 text-sm text-slate-400">Bude upřesněno</p>
+                )}
                 <p className="mt-3 text-xs font-bold uppercase tracking-wider text-[#39FF14] opacity-0 transition-opacity group-hover:opacity-100">
                   Přihlásit tým →
                 </p>

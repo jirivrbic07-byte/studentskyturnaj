@@ -3,7 +3,7 @@ import { pageMetadata } from "@/lib/site-seo";
 
 export const metadata: Metadata = pageMetadata({
   title: "Přihlášení",
-  description: "Přihlášení kapitána do portálu ESPORTARENA TSV.",
+  description: "Přihlášení hráče, kapitána nebo administrátora do portálu ESPORTARENA TSV.",
   path: "/prihlaseni",
 });
 

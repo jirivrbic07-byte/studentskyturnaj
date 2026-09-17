@@ -44,6 +44,7 @@ type Draft = {
   parentFile: File | null;
   existingStudentUrl?: string;
   existingParentUrl?: string;
+  linkedUserId?: string | null;
 };
 
 function emptyDraft(): Draft {
@@ -88,6 +89,7 @@ function draftFromRoster(p: RosterPlayer): Draft {
     parentFile: null,
     existingStudentUrl: p.studentCertUrl,
     existingParentUrl: p.parentConsentUrl,
+    linkedUserId: p.linkedUserId ?? null,
   };
 }
 
@@ -399,6 +401,9 @@ export function TeamRegistrationForm({
       }
       if (usesFaceit) {
         player.faceitElo = elo;
+      }
+      if (d.linkedUserId) {
+        player.linkedUserId = d.linkedUserId;
       }
       players.push(player);
     }

@@ -42,7 +42,7 @@ export const SITE_NAV_SEO = [
     path: "/sezona-4",
     title: `Sezóna ${SEASON_NUMBER}`,
     description:
-      "Harmonogram Sezóny 4, zápis do sezóny, kvalifikace a pavouk pro CS2 a LoL.",
+    "Harmonogram Sezóny 4: registrace je otevřená, start 1. 1. 2027. Termíny kvalifikací a zápasů budou upřesněny. Zápis do sezóny a pavouk pro CS2 a LoL.",
   },
   {
     path: "/turnaje",
@@ -70,9 +70,9 @@ export const SITE_NAV_SEO = [
   },
   {
     path: "/registrace",
-    title: "Registrace kapitána",
+    title: "Registrace",
     description:
-      "Založení účtu kapitána pro správu týmů v portálu ESPORTARENA TSV.",
+      "Založení účtu kapitána nebo hráče v portálu ESPORTARENA TSV.",
   },
   {
     path: "/oznameni",

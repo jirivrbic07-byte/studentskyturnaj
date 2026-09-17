@@ -1,20 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { GlassCard } from "@/components/glass-card";
 
-const channel =
-  process.env.NEXT_PUBLIC_TWITCH_CHANNEL?.trim() || "spajkk";
+const kickChannel = process.env.NEXT_PUBLIC_KICK_CHANNEL?.trim() || "";
+const kickUrl = kickChannel
+  ? `https://kick.com/${encodeURIComponent(kickChannel)}`
+  : "https://kick.com/";
 
 export function TwitchHub() {
-  const [enabled, setEnabled] = useState(false);
-  const parent =
-    typeof window !== "undefined" ? window.location.hostname : "localhost";
-
-  const src = `https://player.twitch.tv/?channel=${encodeURIComponent(
-    channel
-  )}&parent=${encodeURIComponent(parent)}`;
-
   return (
     <section className="py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -22,42 +15,29 @@ export function TwitchHub() {
           OFICIÁLNÍ <span className="text-[#39FF14]">STREAM</span>
         </h2>
         <p className="mt-2 max-w-2xl text-slate-400">
-          Jediný oficiální přenos turnaje — žádné rozptýlené kanály. Sleduj
-          přímo zde.
+          Sezóna 4 se bude streamovat na Kicku. S platformou teď ladíme spolupráci
+          a podmínky přenosu — kanál i termín spuštění oznámíme v Oznámeních.
         </p>
-        <GlassCard className="mt-8 overflow-hidden p-0">
-          <div className="aspect-video w-full bg-black">
-            {enabled ? (
-              <iframe
-                title="Twitch — oficiální kanál"
-                src={src}
-                allowFullScreen
-                loading="lazy"
-                height="100%"
-                width="100%"
-                className="h-full min-h-[240px] w-full sm:min-h-[360px]"
-                suppressHydrationWarning
-              />
-            ) : (
-              <div className="flex h-full min-h-[240px] w-full flex-col items-center justify-center gap-3 px-4 text-center sm:min-h-[360px]">
-                <p className="text-sm text-slate-300">
-                  Twitch stream se načte až po kliknutí, aby byl web rychlejší.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setEnabled(true)}
-                  className="rounded-lg border border-[#39FF14]/50 bg-[#39FF14]/15 px-4 py-2 text-sm font-semibold text-[#39FF14] transition-colors hover:bg-[#39FF14]/25"
-                >
-                  Spustit stream
-                </button>
-              </div>
-            )}
-          </div>
+        <GlassCard className="mt-8 overflow-hidden">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#39FF14]">
+            Kick
+          </p>
+          <p className="mt-3 text-lg font-semibold text-white">
+            Oficiální přenos turnaje na Kicku
+          </p>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+            Předchozí sezóny běžely na Twitchi. Od Sezóny 4 přesouváme vysílání na
+            vlastní Kick kanál, aby byl přenos na jednom místě a pod značkou turnaje.
+          </p>
+          <a
+            href={kickUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 inline-flex rounded-lg border border-[#39FF14]/50 bg-[#39FF14]/15 px-4 py-2 text-sm font-semibold text-[#39FF14] transition-colors hover:bg-[#39FF14]/25"
+          >
+            {kickChannel ? `Otevřít Kick · ${kickChannel}` : "Kick.com"}
+          </a>
         </GlassCard>
-        <p className="mt-3 text-center text-xs text-slate-500">
-          Kanál: <span className="text-slate-400">{channel}</span> · nastavitelné
-          přes NEXT_PUBLIC_TWITCH_CHANNEL
-        </p>
       </div>
     </section>
   );

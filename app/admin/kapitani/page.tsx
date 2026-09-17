@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useAdminTempBypass } from "@/contexts/admin-temp-context";
-import { isClientAdminEmail } from "@/lib/admin-client";
 import { PortalPageHeader } from "@/components/portal-page-header";
 import { GlassCard } from "@/components/glass-card";
 import { GlowButton } from "@/components/glow-button";
@@ -36,7 +35,7 @@ type TeamBrief = {
 };
 
 export default function AdminCaptainsPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, access } = useAuth();
   const tempBypass = useAdminTempBypass();
   const router = useRouter();
 
@@ -222,7 +221,7 @@ export default function AdminCaptainsPage() {
   );
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || access.loading) return;
     if (tempBypass) {
       void loadList();
       return;
@@ -231,12 +230,12 @@ export default function AdminCaptainsPage() {
       router.replace("/prihlaseni");
       return;
     }
-    if (!isClientAdminEmail(user.email)) {
+    if (!access.isAdmin) {
       router.replace("/zakazano");
       return;
     }
     void loadList();
-  }, [user, loading, loadList, router, tempBypass]);
+  }, [user, loading, access.loading, access.isAdmin, loadList, router, tempBypass]);
 
   useEffect(() => {
     if (!selectedUid || !user) return;
@@ -447,7 +446,7 @@ export default function AdminCaptainsPage() {
     }
   }
 
-  if (loading) {
+  if (loading || access.loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-slate-500">
         Načítání…
@@ -455,7 +454,7 @@ export default function AdminCaptainsPage() {
     );
   }
 
-  if (!tempBypass && (!user || !isClientAdminEmail(user.email))) {
+  if (!tempBypass && (!user || !access.isAdmin)) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-slate-500">
         Načítání…

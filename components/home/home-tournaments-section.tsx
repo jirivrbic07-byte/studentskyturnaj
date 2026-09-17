@@ -20,8 +20,9 @@ export function HomeTournamentsSection() {
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-slate-500">
           V Sezóně 4 hrajeme CS2 a League of Legends — každá disciplína má vlastní turnaje
-          a přihlášené týmy. Prize pool zatím neznáme; dozvíš se ho mezi začátkem a koncem
-          registrace.
+          a přihlášené týmy. Registrace je otevřená, start turnaje 1. 1. 2027. Termíny
+          kvalifikací a zápasů budou upřesněny. Prize pool zatím neznáme; dozvíš se ho
+          mezi začátkem a koncem registrace.
         </p>
         <GlassCard className="mx-auto mt-10 max-w-xl text-center" delay={0}>
           <p className="text-sm text-slate-400">

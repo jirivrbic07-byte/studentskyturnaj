@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useAdminTempBypass } from "@/contexts/admin-temp-context";
-import { isClientAdminEmail } from "@/lib/admin-client";
 import { PortalPageHeader } from "@/components/portal-page-header";
 import { GlassCard } from "@/components/glass-card";
 import { GlowButton } from "@/components/glow-button";
@@ -13,6 +12,7 @@ import {
   getFaceitPlayerUrl,
   rosterGameNickLabel,
 } from "@/lib/game-player-accounts";
+import { TEAM_DOC_RETENTION_MS, parseTimestampMs } from "@/lib/team-document-retention";
 
 type TeamRow = {
   id: string;
@@ -21,6 +21,8 @@ type TeamRow = {
   schoolName?: string;
   schoolFullName?: string;
   status?: "pending" | "approved" | "rejected";
+  approvedAt?: string;
+  documentsPurgedAt?: string;
   captainEmail?: string;
   captainDiscord?: string;
   coach?: {
@@ -100,27 +102,29 @@ function getStatusLabel(status?: TeamRow["status"]) {
 }
 
 function getDocumentVisibilityLabel(team: TeamRow) {
-  const uploads = team.storageMeta
-    ?.map((item) => item.uploadedAt)
-    .filter((value): value is number => typeof value === "number");
-
-  if (!uploads?.length) {
-    return "Dokumenty jsou dostupné maximálně 48 hodin od nahrání.";
+  if (team.status === "pending") {
+    return "Dokumenty držíme, dokud tým neschválíš. Po schválení se smažou za 24 hodin.";
   }
-
-  const expiresAt = Math.max(...uploads) + 48 * 60 * 60 * 1000;
-  const remainingMs = expiresAt - Date.now();
-
+  if (team.status !== "approved") {
+    return "U zamítnutého týmu doklady necháváme jen pro kontrolu; po schválení jiného týmu platí 24h úklid.";
+  }
+  if (team.documentsPurgedAt || collectDocLinks(team).length === 0) {
+    return "Dokumenty už byly automaticky smazané, nebo u týmu žádné odkazy nejsou.";
+  }
+  const approvedMs = parseTimestampMs(team.approvedAt);
+  if (approvedMs == null) {
+    return "Tým je schválený. Doklady se smažou při nejbližším úklidu (24 h od schválení).";
+  }
+  const remainingMs = approvedMs + TEAM_DOC_RETENTION_MS - Date.now();
   if (remainingMs <= 0) {
-    return "Dokumenty už měly být automaticky smazané nebo právě čekají na vyčištění.";
+    return "Dokumenty už měly být smazané, nebo právě čekají na hodinový úklid.";
   }
-
-  const remainingHours = Math.ceil(remainingMs / (60 * 60 * 1000));
-  return `Dokumenty budou dostupné ještě přibližně ${remainingHours} h.`;
+  const remainingHours = Math.max(1, Math.ceil(remainingMs / (60 * 60 * 1000)));
+  return `Dokumenty se smažou přibližně za ${remainingHours} h (24 h od schválení).`;
 }
 
 export default function AdminTeamsPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, access } = useAuth();
   const tempBypass = useAdminTempBypass();
   const router = useRouter();
   const [teams, setTeams] = useState<TeamRow[]>([]);
@@ -213,7 +217,7 @@ export default function AdminTeamsPage() {
   }, [selectedTeam]);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || access.loading) return;
     if (tempBypass) {
       void load();
       return;
@@ -222,12 +226,12 @@ export default function AdminTeamsPage() {
       router.replace("/prihlaseni");
       return;
     }
-    if (!isClientAdminEmail(user.email)) {
+    if (!access.isAdmin) {
       router.replace("/zakazano");
       return;
     }
     void load();
-  }, [user, loading, load, router, tempBypass]);
+  }, [user, loading, access.loading, access.isAdmin, load, router, tempBypass]);
 
   async function sendMessage() {
     if (!user || !messageTeam) return;
@@ -347,7 +351,7 @@ export default function AdminTeamsPage() {
     }
   }
 
-  if (loading) {
+  if (loading || access.loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-slate-500">
         Načítání…
@@ -355,7 +359,7 @@ export default function AdminTeamsPage() {
     );
   }
 
-  if (!tempBypass && (!user || !isClientAdminEmail(user.email))) {
+  if (!tempBypass && (!user || !access.isAdmin)) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center text-slate-500">
         Načítání…
@@ -635,7 +639,7 @@ export default function AdminTeamsPage() {
                   {getDocumentVisibilityLabel(selectedTeam)}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  Potvrzení o studiu a souhlasy rodičů se po 48 hodinách automaticky smažou.
+                  Potvrzení o studiu a souhlasy rodičů se smažou 24 hodin po schválení týmu.
                 </p>
                 <ul className="mt-3 space-y-1 text-sm">
                   {collectDocLinks(selectedTeam).length > 0 ? (

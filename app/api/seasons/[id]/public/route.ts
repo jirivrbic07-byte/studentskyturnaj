@@ -8,9 +8,18 @@ import {
   listQualificationAdvancementsRest,
 } from "@/lib/seasons-firestore";
 import type { GameId } from "@/lib/games";
-import { S4_DEFAULT_SEASON, S4_SEASON_ID, S4_SEASON_SLUG, type SeasonDocument } from "@/lib/seasons";
+import {
+  overlaySeasonSchedule,
+  publicSeasonMatchStartsAtMs,
+  S4_DEFAULT_SEASON,
+  S4_SEASON_ID,
+  S4_SEASON_SLUG,
+  type SeasonDocument,
+} from "@/lib/seasons";
 
 type Ctx = { params: Promise<{ id: string }> };
+
+export const dynamic = "force-dynamic";
 
 async function resolveSeason(idOrSlug: string) {
   if (idOrSlug === S4_SEASON_SLUG || idOrSlug === "s4") {
@@ -35,11 +44,16 @@ export async function GET(_request: Request, ctx: Ctx) {
       return NextResponse.json({ ok: false, error: "Sezóna nenalezena." }, { status: 404 });
     }
 
+    season = overlaySeasonSchedule(season);
+
     const seasonId = String(season.id ?? id);
     const tournaments = await listTournamentsAdminRest();
-    const seasonTournaments = tournaments.filter(
-      (t) => t.seasonId === seasonId && t.published
-    );
+    const seasonTournaments = tournaments
+      .filter((t) => t.seasonId === seasonId && t.published)
+      .map((t) => ({
+        ...t,
+        startsAtMs: publicSeasonMatchStartsAtMs(t.seasonId, t.startsAtMs, t.name),
+      }));
 
     const brackets: Record<string, unknown> = {};
     const advancements: Record<string, unknown> = {};

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useAdminTempBypass } from "@/contexts/admin-temp-context";
-import { isClientAdminEmail } from "@/lib/admin-client";
 import { gameLabel, type GameId } from "@/lib/games";
 import { GlassCard } from "@/components/glass-card";
 import { GlowButton } from "@/components/glow-button";
@@ -68,7 +67,7 @@ async function openProtectedDoc(
 }
 
 export function AdminPendingTeamsPanel() {
-  const { user, loading } = useAuth();
+  const { user, loading, access } = useAuth();
   const tempBypass = useAdminTempBypass();
   const router = useRouter();
   const [teams, setTeams] = useState<TeamRow[]>([]);
@@ -118,7 +117,7 @@ export function AdminPendingTeamsPanel() {
   const pendingTeams = teams.filter((team) => team.status === "pending");
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || access.loading) return;
     if (tempBypass) {
       void load();
       return;
@@ -127,12 +126,12 @@ export function AdminPendingTeamsPanel() {
       router.replace("/prihlaseni");
       return;
     }
-    if (!isClientAdminEmail(user.email)) {
+    if (!access.isAdmin) {
       router.replace("/zakazano");
       return;
     }
     void load();
-  }, [user, loading, load, router, tempBypass]);
+  }, [user, loading, access.loading, access.isAdmin, load, router, tempBypass]);
 
   async function approve(id: string) {
     if (!user) return;
@@ -187,11 +186,11 @@ export function AdminPendingTeamsPanel() {
     }
   }
 
-  if (loading) {
+  if (loading || access.loading) {
     return <p className="text-slate-500">Načítání…</p>;
   }
 
-  if (!tempBypass && (!user || !isClientAdminEmail(user.email))) {
+  if (!tempBypass && (!user || !access.isAdmin)) {
     return <p className="text-slate-500">Načítání…</p>;
   }
 

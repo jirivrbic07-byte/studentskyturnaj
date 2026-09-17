@@ -23,6 +23,7 @@ import {
 import type { TeamStatus } from "@/lib/types";
 import { GlassCard } from "@/components/glass-card";
 import { GlowButton } from "@/components/glow-button";
+import { parseAccountRole } from "@/lib/account-role";
 
 type TeamSnap = {
   id: string;
@@ -39,7 +40,8 @@ export function SeasonEnrollPanel({
   seasonId: string;
   season: SeasonDocument;
 }) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, profile } = useAuth();
+  const isPlayer = parseAccountRole(profile?.accountRole) === "player";
   const [teams, setTeams] = useState<TeamSnap[]>([]);
   const [enrolled, setEnrolled] = useState<Record<string, boolean>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -47,7 +49,7 @@ export function SeasonEnrollPanel({
   const [loadingTeams, setLoadingTeams] = useState(true);
 
   const loadTeams = useCallback(async () => {
-    if (!user || !isFirebaseConfigured()) {
+    if (!user || !isFirebaseConfigured() || isPlayer) {
       setTeams([]);
       setLoadingTeams(false);
       return;
@@ -72,7 +74,7 @@ export function SeasonEnrollPanel({
       })
     );
     setLoadingTeams(false);
-  }, [user]);
+  }, [user, isPlayer]);
 
   const checkEnrollments = useCallback(async () => {
     if (!user) return;
@@ -121,6 +123,17 @@ export function SeasonEnrollPanel({
     } finally {
       setBusyId(null);
     }
+  }
+
+  if (isPlayer) {
+    return (
+      <GlassCard>
+        <p className="text-sm text-slate-400">
+          Zápis do sezóny dělá kapitán. Ty se díváš na průběh a po schválení
+          uvidíš odkazy v turnajích.
+        </p>
+      </GlassCard>
+    );
   }
 
   if (authLoading || loadingTeams) {

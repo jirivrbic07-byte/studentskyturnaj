@@ -14,13 +14,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Neautorizováno." }, { status: 401 });
   }
 
-  let body: { email?: string };
+  let body: { email?: string; accountRole?: string };
   try {
     body = await request.json();
   } catch {
     body = {};
   }
   const email = (body.email ?? user.email ?? "").trim();
+  const roleLabel = body.accountRole === "player" ? "hráč" : "kapitán";
   if (!email) {
     return NextResponse.json(
       { ok: false, error: "Chybí e-mail v tokenu nebo v těle požadavku." },
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
   await notifyDiscordCaptainRegistered({
     email,
     uid: user.uid,
+    accountRole: body.accountRole === "player" ? "player" : "captain",
   });
 
   if (!key || !from) {
@@ -44,8 +46,8 @@ export async function POST(request: Request) {
   const { error } = await resend.emails.send({
     from,
     to,
-    subject: `[ESPORTARENA TSV] Nový kapitán: ${email}`,
-    html: adminNewUserEmailHtml(email, user.uid),
+    subject: `[ESPORTARENA TSV] Nový ${roleLabel}: ${email}`,
+    html: adminNewUserEmailHtml(email, user.uid, roleLabel),
   });
 
   if (error) {
